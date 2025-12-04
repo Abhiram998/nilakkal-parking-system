@@ -4,16 +4,29 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ParkingProvider } from "@/lib/parking-context";
+import ThemeWrapper from "@/components/shared/ThemeWrapper";
 import Layout from "@/components/layout/Layout";
 import Home from "@/pages/Home";
 import Admin from "@/pages/Admin";
+import Login from "@/pages/Login";
+import AdminLogin from "@/pages/AdminLogin";
+import AreaDetails from "@/pages/AreaDetails";
+import Predictions from "@/pages/Predictions";
+import Ticket from "@/pages/Ticket";
+import Profile from "@/pages/Profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
       <Route path="/admin" component={Admin} />
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/zone/:id" component={AreaDetails} />
+      <Route path="/predictions" component={Predictions} />
+      <Route path="/ticket" component={Ticket} />
+      <Route path="/profile" component={Profile} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -25,9 +38,11 @@ function App() {
       <TooltipProvider>
         <ParkingProvider>
           <Toaster />
-          <Layout>
-            <Router />
-          </Layout>
+          <ThemeWrapper>
+            <Layout>
+              <Router />
+            </Layout>
+          </ThemeWrapper>
         </ParkingProvider>
       </TooltipProvider>
     </QueryClientProvider>

@@ -35,79 +35,74 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 }
 
-/* LIGHT MODE - Forest & Saffron Theme */
+/* LIGHT MODE - Clean Blue/White Theme (User) */
 :root {
-  /* Warm Off-white Background */
-  --background: 36 33% 97%; 
-  --foreground: 150 40% 10%; /* Very dark green text */
+  --background: 210 40% 98%; /* Very light blue-white */
+  --foreground: 222 47% 11%; /* Dark Blue Text */
 
-  /* Card: White with slight warmth */
   --card: 0 0% 100%;
-  --card-foreground: 150 40% 10%;
+  --card-foreground: 222 47% 11%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 150 40% 10%;
+  --popover-foreground: 222 47% 11%;
 
-  /* Primary: Deep Forest Green (Ayyappa) */
-  --primary: 150 60% 25%;
-  --primary-foreground: 45 20% 95%;
+  /* Primary: Trustworthy Blue */
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
 
-  /* Secondary: Muted Earth Tone */
-  --secondary: 30 20% 90%;
-  --secondary-foreground: 150 40% 20%;
+  /* Secondary: Light Blue Grey */
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222 47% 11.2%;
 
-  /* Muted: Soft Grey-Green */
-  --muted: 150 10% 92%;
-  --muted-foreground: 150 10% 40%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
 
-  /* Accent: Saffron / Gold */
-  --accent: 35 95% 55%;
-  --accent-foreground: 35 10% 10%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222 47% 11.2%;
 
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
 
-  --border: 150 10% 85%;
-  --input: 150 10% 85%;
-  --ring: 150 60% 25%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221 83% 53%;
 
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 }
 
+/* DARK MODE - Police Control (High Contrast, Serious) */
 .dark {
-  /* Deep Forest Night */
-  --background: 150 50% 5%;
-  --foreground: 45 10% 90%;
+  --background: 222 47% 11%; /* Deep Navy/Black */
+  --foreground: 210 40% 98%;
 
-  --card: 150 40% 8%;
-  --card-foreground: 45 10% 90%;
+  --card: 217 33% 17%; /* Darker Navy */
+  --card-foreground: 210 40% 98%;
 
-  --popover: 150 40% 8%;
-  --popover-foreground: 45 10% 90%;
+  --popover: 217 33% 17%;
+  --popover-foreground: 210 40% 98%;
 
-  /* Primary: Slightly brighter Green for dark mode */
-  --primary: 150 50% 40%;
-  --primary-foreground: 0 0% 100%;
+  /* Primary: Alert Blue/Cyan */
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 11%;
 
-  --secondary: 150 30% 15%;
-  --secondary-foreground: 45 10% 90%;
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
 
-  --muted: 150 30% 15%;
-  --muted-foreground: 150 10% 60%;
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
 
-  /* Accent: Glowing Gold */
-  --accent: 35 95% 50%;
-  --accent-foreground: 0 0% 10%;
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
 
-  --destructive: 0 62% 30%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
 
-  --border: 150 30% 15%;
-  --input: 150 30% 15%;
-  --ring: 150 50% 40%;
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 224 76% 48%;
 }
 
 @layer base {
@@ -116,8 +111,5 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
   }
 }
