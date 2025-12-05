@@ -8,13 +8,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Eye, Bus, Truck, Car, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { Eye, Bus, Truck, Car, ChevronLeft, ChevronRight, Pause, Play, Search } from "lucide-react";
 
 export default function Admin() {
   const { zones, totalCapacity, totalOccupied } = useParking();
   const [selectedZone, setSelectedZone] = useState<ParkingZone | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResult, setSearchResult] = useState<{zone: ParkingZone, vehicle: any} | null>(null);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      setSearchResult(null);
+      return;
+    }
+
+    for (const zone of zones) {
+      const vehicle = zone.vehicles.find(v => v.number.toLowerCase().includes(searchQuery.toLowerCase()));
+      if (vehicle) {
+        setSearchResult({ zone, vehicle });
+        return;
+      }
+    }
+    setSearchResult(null);
+    alert("Vehicle not found");
+  };
+
   // Slideshow state
   const [pageIndex, setPageIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -71,6 +93,51 @@ export default function Admin() {
           <div className="text-xs uppercase tracking-widest mb-1 text-white/70">Total Capacity</div>
           <div className="text-3xl font-bold">{totalCapacity}</div>
         </div>
+      </div>
+
+      {/* Search Section */}
+      <div className="mb-8 border border-white p-4">
+        <form onSubmit={handleSearch} className="flex gap-4 items-end">
+          <div className="flex-1 space-y-2">
+            <label className="text-xs uppercase tracking-widest text-white/70">Search Vehicle Number</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+              <Input 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Enter Vehicle Number (e.g. KL-01...)" 
+                className="pl-9 bg-black border-white text-white placeholder:text-white/30 rounded-none h-12 font-mono"
+              />
+            </div>
+          </div>
+          <Button type="submit" className="h-12 px-8 rounded-none bg-white text-black hover:bg-white/90 font-bold">
+            SEARCH
+          </Button>
+        </form>
+        
+        {searchResult && (
+          <div className="mt-4 p-4 bg-white/10 border border-white flex justify-between items-center animate-in fade-in">
+            <div>
+              <div className="text-xs uppercase tracking-widest text-green-400 mb-1">Vehicle Found</div>
+              <div className="text-xl font-bold">{searchResult.vehicle.number}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs uppercase tracking-widest text-white/70 mb-1">Zone</div>
+              <div className="text-xl font-bold">{searchResult.zone.name}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs uppercase tracking-widest text-white/70 mb-1">Slot ID</div>
+              <div className="text-xl font-bold">{searchResult.vehicle.ticketId}</div>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setSelectedZone(searchResult.zone)}
+              className="rounded-none border-white text-white hover:bg-white hover:text-black"
+            >
+              VIEW DETAILS
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Top Info Bar */}

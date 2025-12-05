@@ -70,8 +70,8 @@ export default function Predictions() {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="time" hide />
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none' }} />
-                <Area type="monotone" dataKey="prob" stroke="#fff" strokeWidth={2} fill="url(#colorProbWhite)" />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none' }} cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 2 }} isAnimationActive={false} />
+                <Area type="monotone" dataKey="prob" stroke="#fff" strokeWidth={2} fill="url(#colorProbWhite)" activeDot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
