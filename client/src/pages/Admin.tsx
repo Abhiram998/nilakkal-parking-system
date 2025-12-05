@@ -144,24 +144,12 @@ export default function Admin() {
 
         {/* Right Column: Zone Dashboard */}
         <div className="lg:col-span-2">
-          <Tabs defaultValue="grid" className="h-full flex flex-col">
+          <div className="h-full flex flex-col">
             <div className="flex justify-between items-center mb-4 shrink-0">
               <h3 className="text-xl font-serif font-bold">Zone Overview</h3>
-              <TabsList>
-                <TabsTrigger value="grid"><LayoutDashboard className="w-4 h-4 mr-2"/> Grid</TabsTrigger>
-                <TabsTrigger value="list"><BarChart3 className="w-4 h-4 mr-2"/> List</TabsTrigger>
-              </TabsList>
             </div>
             
-            <TabsContent value="grid" className="mt-0 flex-1 h-[600px]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full overflow-y-auto pr-2 scrollbar-thin pb-4">
-                {zones.map((zone) => (
-                  <ZoneCard key={zone.id} zone={zone} detailed />
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="list" className="mt-0 flex-1 h-[600px]">
+            <div className="mt-0 flex-1 h-[600px]">
               <Card className="h-full flex flex-col">
                 <CardContent className="p-0 flex-1 overflow-hidden">
                   <div className="h-full overflow-y-auto">
@@ -211,8 +199,8 @@ export default function Admin() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
         </div>
       </div>
 
