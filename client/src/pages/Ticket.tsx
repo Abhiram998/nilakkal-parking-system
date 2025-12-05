@@ -67,7 +67,6 @@ export default function Ticket() {
               <div className="bg-white p-4 rounded-xl border-2 border-black/10">
                 <QrCode className="w-32 h-32 text-black" />
               </div>
-              <p className="text-xs text-muted-foreground">Scan this QR code at the exit gate</p>
               <p className="font-mono text-xs text-muted-foreground">{ticket.id}</p>
             </div>
           </CardContent>
