@@ -10,6 +10,7 @@ import Home from "@/pages/Home";
 import Admin from "@/pages/Admin";
 import Login from "@/pages/Login";
 import AdminLogin from "@/pages/AdminLogin";
+import AdminProfile from "@/pages/AdminProfile";
 import AreaDetails from "@/pages/AreaDetails";
 import Predictions from "@/pages/Predictions";
 import Ticket from "@/pages/Ticket";
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/admin" component={Admin} />
       <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/profile" component={AdminProfile} />
       <Route path="/zone/:id" component={AreaDetails} />
       <Route path="/predictions" component={Predictions} />
       <Route path="/ticket" component={Ticket} />

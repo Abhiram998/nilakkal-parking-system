@@ -41,9 +41,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <>
           <div className="border-t my-2 md:border-l md:border-t-0 md:my-0 md:mx-2 md:h-6 opacity-20" />
           <Link href="/admin">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${location.startsWith('/admin') ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-primary'}`}>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${location.startsWith('/admin') && location !== '/admin/profile' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-primary'}`}>
               <LayoutDashboard className="w-4 h-4" />
               <span>Dashboard</span>
+            </div>
+          </Link>
+          <Link href="/admin/profile">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${location === '/admin/profile' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-primary'}`}>
+              <User className="w-4 h-4" />
+              <span>Admin Profile</span>
             </div>
           </Link>
           <Link href="/qr-code">
