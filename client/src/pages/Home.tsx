@@ -87,12 +87,12 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Logo positioned on the right side */}
-          <div className="hidden md:flex h-full items-center justify-center mr-8">
+          {/* Logo positioned on the right side - Absolute positioning for better control */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 md:right-8 lg:right-16 h-[200px] w-[200px] flex items-center justify-center z-20">
              <img 
                src={policeLogo} 
                alt="Kerala Police Logo" 
-               className="h-[140%] w-auto object-contain drop-shadow-2xl filter brightness-110 -translate-y-4" 
+               className="h-full w-full object-contain drop-shadow-2xl filter brightness-110" 
              />
           </div>
         </div>
