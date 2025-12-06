@@ -87,8 +87,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Logo positioned on the right side - Smaller and blended */}
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 md:right-8 lg:right-16 h-32 w-32 md:h-40 md:w-40 flex items-center justify-center z-20">
+          {/* Logo positioned on the top right side - Smaller and blended */}
+          <div className="absolute right-4 top-4 md:right-8 lg:right-16 h-24 w-24 md:h-32 md:w-32 flex items-center justify-center z-20">
              <img 
                src={policeLogo} 
                alt="Kerala Police Logo" 
