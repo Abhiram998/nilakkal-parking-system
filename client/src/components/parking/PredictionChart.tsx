@@ -33,6 +33,7 @@ export function PredictionChart() {
             dy={10}
           />
           <YAxis 
+            domain={[0, 100]}
             axisLine={false} 
             tickLine={false} 
             tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}

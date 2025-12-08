@@ -35,12 +35,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {isAdmin && (
         <div className="flex items-center">
-          <Link href="/admin/profile">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${location === '/admin/profile' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-primary'}`}>
-              <User className="w-4 h-4" />
-              <span>Profile</span>
-            </div>
-          </Link>
           <Link href="/admin">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors cursor-pointer ${location === '/admin' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-primary'}`}>
               <LayoutDashboard className="w-4 h-4" />

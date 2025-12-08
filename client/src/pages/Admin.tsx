@@ -136,11 +136,6 @@ export default function Admin() {
           <div className="text-xs text-white/60">CONTROL ROOM • {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}</div>
         </div>
         <div className="flex gap-4 items-center">
-          <Link href="/admin/profile">
-            <Button className="bg-white/10 text-white hover:bg-white/20 rounded-none gap-2 border border-white/20">
-              <User className="w-4 h-4" /> Profile
-            </Button>
-          </Link>
           <Button onClick={openCreateDialog} className="bg-white text-black hover:bg-white/90 rounded-none gap-2">
             <Plus className="w-4 h-4" /> Add Zone
           </Button>
