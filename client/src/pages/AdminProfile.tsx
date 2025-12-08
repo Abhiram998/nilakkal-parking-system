@@ -3,12 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Shield, Phone, User, BadgeCheck, Mail, MapPin } from "lucide-react";
+import { LogOut, Shield, Phone, User, BadgeCheck, Mail, MapPin, UserPlus } from "lucide-react";
 import { useLocation } from "wouter";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminProfile() {
-  const { logoutAdmin, isAdmin } = useParking();
+  const { logoutAdmin, isAdmin, registerAdmin } = useParking();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  const [newAdminOpen, setNewAdminOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    policeId: "",
+    email: "",
+    password: ""
+  });
 
   if (!isAdmin) {
     setLocation("/admin/login");
@@ -20,14 +34,106 @@ export default function AdminProfile() {
     setLocation("/");
   };
 
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (registerAdmin(formData.email, formData.password, formData.name, formData.policeId)) {
+      toast({
+        title: "Officer Registered",
+        description: `${formData.name} has been added to the system.`,
+      });
+      setNewAdminOpen(false);
+      setFormData({ name: "", policeId: "", email: "", password: "" });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: "An officer with this email already exists.",
+      });
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Admin Profile</h1>
-        <Badge variant="outline" className="gap-1 px-3 py-1 border-primary/50 text-primary bg-primary/10">
-          <Shield className="w-3 h-3 fill-current" />
-          Official Access
-        </Badge>
+        <div className="flex gap-2">
+          <Dialog open={newAdminOpen} onOpenChange={setNewAdminOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <UserPlus className="w-4 h-4" />
+                Register Officer
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Register New Officer</DialogTitle>
+                <DialogDescription>
+                  Create a new access profile for an authorized officer.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleRegister} className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="policeId" className="text-right">
+                    Police ID
+                  </Label>
+                  <Input
+                    id="policeId"
+                    value={formData.policeId}
+                    onChange={(e) => setFormData({ ...formData, policeId: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="password" className="text-right">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Register Officer</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+          
+          <Badge variant="outline" className="gap-1 px-3 py-1 border-primary/50 text-primary bg-primary/10">
+            <Shield className="w-3 h-3 fill-current" />
+            Official Access
+          </Badge>
+        </div>
       </div>
 
       <Card className="border-primary/20 shadow-lg overflow-hidden">

@@ -30,6 +30,7 @@ type ParkingContextType = {
   totalOccupied: number;
   isAdmin: boolean;
   loginAdmin: (username?: string, password?: string) => boolean;
+  registerAdmin: (username: string, password: string, name: string, policeId: string) => boolean;
   logoutAdmin: () => void;
   addZone: (zone: Omit<ParkingZone, 'id' | 'occupied' | 'vehicles' | 'stats'>) => void;
   updateZone: (id: string, data: Partial<Pick<ParkingZone, 'name' | 'capacity'>>) => void;
@@ -75,13 +76,25 @@ const INITIAL_ZONES: ParkingZone[] = Array.from({ length: ZONES_COUNT }, (_, i) 
 export function ParkingProvider({ children }: { children: React.ReactNode }) {
   const [zones, setZones] = useState<ParkingZone[]>(INITIAL_ZONES);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [admins, setAdmins] = useState([
+    { username: "police@gmail.com", password: "575", name: "Sabarimala Traffic Control", policeId: "POL-KERALA-575" }
+  ]);
 
   const loginAdmin = (username?: string, password?: string) => {
-    if (username === "police@gmail.com" && password === "575") {
+    const admin = admins.find(a => a.username === username && a.password === password);
+    if (admin) {
       setIsAdmin(true);
       return true;
     }
     return false;
+  };
+
+  const registerAdmin = (username: string, password: string, name: string, policeId: string) => {
+    if (admins.some(a => a.username === username)) {
+      return false; // Already exists
+    }
+    setAdmins([...admins, { username, password, name, policeId }]);
+    return true;
   };
   
   const logoutAdmin = () => setIsAdmin(false);
@@ -201,7 +214,7 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
   const totalOccupied = zones.reduce((acc, z) => acc + z.occupied, 0);
 
   return (
-    <ParkingContext.Provider value={{ zones, enterVehicle, totalCapacity, totalOccupied, isAdmin, loginAdmin, logoutAdmin, addZone, updateZone, deleteZone }}>
+    <ParkingContext.Provider value={{ zones, enterVehicle, totalCapacity, totalOccupied, isAdmin, loginAdmin, registerAdmin, logoutAdmin, addZone, updateZone, deleteZone }}>
       {children}
     </ParkingContext.Provider>
   );
