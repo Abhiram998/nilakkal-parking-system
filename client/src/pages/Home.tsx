@@ -288,9 +288,30 @@ export default function Home() {
                     }}
                   />
                   {/* Unstacked bars (side by side) */}
-                  <Bar dataKey="Heavy" fill="#1e293b" radius={[4, 4, 0, 0]} name="Heavy" />
-                  <Bar dataKey="Medium" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Medium" />
-                  <Bar dataKey="Light" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Light" />
+                  <Bar dataKey="Heavy" fill="#1e293b" radius={[4, 4, 0, 0]} name="Heavy">
+                    <LabelList 
+                        dataKey="Heavy" 
+                        position="top" 
+                        formatter={(value: number) => value > 0 ? `${Math.round(value)}%` : ''}
+                        style={{ fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} 
+                    />
+                  </Bar>
+                  <Bar dataKey="Medium" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Medium">
+                    <LabelList 
+                        dataKey="Medium" 
+                        position="top" 
+                        formatter={(value: number) => value > 0 ? `${Math.round(value)}%` : ''}
+                        style={{ fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} 
+                    />
+                  </Bar>
+                  <Bar dataKey="Light" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Light">
+                    <LabelList 
+                        dataKey="Light" 
+                        position="top" 
+                        formatter={(value: number) => value > 0 ? `${Math.round(value)}%` : ''}
+                        style={{ fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} 
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>

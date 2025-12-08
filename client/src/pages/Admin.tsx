@@ -178,7 +178,6 @@ export default function Admin() {
               <th className="p-3 uppercase tracking-wider border-r border-white font-bold text-right text-xs">Current Vehicles</th>
               <th className="p-3 uppercase tracking-wider border-r border-white font-bold text-right text-xs">Capacity</th>
               <th className="p-3 uppercase tracking-wider border-r border-white font-bold text-right text-xs">Vacant Slots</th>
-              <th className="p-3 uppercase tracking-wider border-r border-white font-bold text-center text-xs">Status</th>
               <th className="p-3 uppercase tracking-wider font-bold text-center text-xs">Actions</th>
             </tr>
           </thead>
@@ -193,15 +192,6 @@ export default function Admin() {
                   <td className="p-3 border-r border-white/20 text-right font-mono text-lg">{zone.occupied}</td>
                   <td className="p-3 border-r border-white/20 text-right font-mono text-lg text-white/50">{zone.capacity}</td>
                   <td className="p-3 border-r border-white/20 text-right font-mono text-lg text-green-500 font-bold">{vacant}</td>
-                  <td className="p-3 border-r border-white/20 text-center">
-                    <span className={`px-3 py-1 text-xs font-bold border ${
-                      isFull 
-                        ? "border-red-500 text-red-500 bg-red-500/10" 
-                        : "border-green-500 text-green-500 bg-green-500/10"
-                    }`}>
-                      {isFull ? "FULL" : "FREE"}
-                    </span>
-                  </td>
                   <td className="p-3 text-center flex justify-center gap-2">
                     <Button 
                       variant="ghost" 
