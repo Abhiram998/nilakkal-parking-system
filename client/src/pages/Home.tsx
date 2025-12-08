@@ -105,42 +105,104 @@ export default function Home() {
       </div>
 
       {/* Top Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1: Vacancy (was Revenue) - Dark Blue */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Card 1: Vacancy */}
         <TopCard 
           title="Vacancy" 
           value={totalVacancy}
           dark={true}
           isVacancy={true}
         />
-        {/* Card 2: Occupancy (was Share) */}
+        {/* Card 2: Occupancy */}
         <TopCard 
           title="Occupancy" 
           value={totalOccupied} 
         />
-        {/* Card 3: Total Capacity (was Likes) */}
+        {/* Card 3: Total Capacity */}
         <TopCard 
           title="Total Capacity" 
           value={totalCapacity} 
         />
+        
+        {/* Card 4: Composition (Moved from right column) */}
+        <div className="rounded-xl p-4 shadow-sm border bg-white border-slate-100 flex flex-col justify-between h-full">
+           <div className="flex justify-between items-start mb-2">
+             <span className="font-medium text-slate-500">Composition</span>
+             <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-full">
+               {hoveredZone ? `Z${hoveredZone.name.replace('Nilakkal Zone ', '')}` : "Total"}
+             </span>
+           </div>
+           
+           <div className="flex items-center gap-4">
+              <div className="w-[80px] h-[80px] relative flex-shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      innerRadius={25}
+                      outerRadius={35}
+                      paddingAngle={0}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                   <span className="text-xs font-bold text-slate-700">{activeOccupancyRate}%</span>
+                </div>
+              </div>
+              
+              <div className="flex-1 space-y-1">
+                 {pieData.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between text-xs">
+                       <div className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+                          <span className="text-slate-500">{item.name}</span>
+                       </div>
+                       <span className="font-bold text-slate-700">{item.value}</span>
+                    </div>
+                 ))}
+              </div>
+           </div>
+        </div>
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-        {/* Left Column (2/3 width) */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 h-full">
+        {/* Full Width Column */}
+        <div className="space-y-6">
           
-          {/* Bar Chart Section (The "Result" graph) */}
+          {/* Bar Chart Section */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-slate-700">Live Zone Status (Occupancy %)</h3>
+              {/* Legend for the chart - Inline on desktop */}
+              <div className="hidden md:flex items-center gap-6">
+                 <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#1e293b] rounded-sm"></div>
+                    <span className="text-xs text-slate-500">Heavy</span>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#f59e0b] rounded-sm"></div>
+                    <span className="text-xs text-slate-500">Medium</span>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#3b82f6] rounded-sm"></div>
+                    <span className="text-xs text-slate-500">Light</span>
+                 </div>
+              </div>
             </div>
-            <div className="h-[350px] w-full">
+            
+            <div className="h-[180px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={barChartData} 
-                  barSize={45}
-                  margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                  barSize={12} // Smaller bars since there are 3 per zone
+                  margin={{ top: 20, right: 10, left: 0, bottom: 5 }}
                   onMouseMove={(state: any) => {
                     if (state.activePayload) {
                       setHoveredZone(state.activePayload[0].payload.originalZone);
@@ -157,6 +219,7 @@ export default function Home() {
                     tickLine={false} 
                     tick={{fill: '#64748b', fontSize: 13, fontWeight: 500}} 
                     dy={10} 
+                    interval={0} // Show all zones
                   />
                   <YAxis 
                     axisLine={false} 
@@ -170,7 +233,6 @@ export default function Home() {
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
-                        const totalOccupancy = (data.Heavy + data.Medium + data.Light).toFixed(1);
                         return (
                           <div className="bg-white p-3 border border-slate-100 shadow-xl rounded-lg text-sm">
                             <p className="font-bold text-slate-800 mb-2">{label}</p>
@@ -196,10 +258,6 @@ export default function Home() {
                                 </span>
                                 <span className="font-mono font-medium">{data.Light.toFixed(1)}%</span>
                               </div>
-                              <div className="pt-2 mt-2 border-t flex justify-between font-bold text-slate-800">
-                                <span>Total</span>
-                                <span>{totalOccupancy}%</span>
-                              </div>
                             </div>
                           </div>
                         );
@@ -207,121 +265,57 @@ export default function Home() {
                       return null;
                     }}
                   />
-                  {/* Stacked bars for cleaner look and more space */}
-                  <Bar dataKey="Heavy" stackId="a" fill="#1e293b" radius={[0, 0, 4, 4]} name="Heavy" />
-                  <Bar dataKey="Medium" stackId="a" fill="#f59e0b" name="Medium" />
-                  <Bar dataKey="Light" stackId="a" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Light">
-                    <LabelList 
-                      dataKey={(entry: any) => {
-                         const total = entry.Heavy + entry.Medium + entry.Light;
-                         return total > 5 ? `${Math.round(total)}%` : '';
-                      }} 
-                      position="top" 
-                      style={{ fill: '#475569', fontSize: 12, fontWeight: 'bold' }} 
-                    />
-                  </Bar>
+                  {/* Unstacked bars (side by side) */}
+                  <Bar dataKey="Heavy" fill="#1e293b" radius={[4, 4, 0, 0]} name="Heavy" />
+                  <Bar dataKey="Medium" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Medium" />
+                  <Bar dataKey="Light" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Light" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            {/* Legend for the chart */}
-            <div className="flex items-center justify-center gap-6 mt-4">
-               <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-[#1e293b] rounded-sm"></div>
-                  <span className="text-xs text-slate-500">Heavy</span>
-               </div>
-               <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-[#f59e0b] rounded-sm"></div>
-                  <span className="text-xs text-slate-500">Medium</span>
-               </div>
-               <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-[#3b82f6] rounded-sm"></div>
-                  <span className="text-xs text-slate-500">Light</span>
-               </div>
-            </div>
           </div>
 
-          {/* Bottom Section: Live Zone Status (Zone Cards) */}
-          <div className="space-y-4">
-             <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-orange-500" />
-                <h3 className="font-bold text-slate-700">Live Zone Overview</h3>
-             </div>
-             
-             {/* 5 columns as requested */}
-             <div className="max-h-[500px] overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {zones.map((zone) => (
-                  <ZoneCard key={zone.id} zone={zone} />
-                ))}
-             </div>
-          </div>
-
-        </div>
-
-        {/* Right Column (1/3 width) */}
-        <div className="space-y-6">
-          {/* Donut Chart Card */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-auto">
-            <h3 className="font-bold text-slate-700 mb-4 text-center">
-              {hoveredZone ? `Zone ${hoveredZone.name.replace('Nilakkal Zone ', '')}` : "Total"} Composition
-            </h3>
-            <div className="relative h-[250px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={0}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Center Text */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-3xl font-bold text-slate-800">{activeOccupancyRate}%</span>
-                <span className="text-xs text-slate-400">Occupied</span>
-              </div>
-            </div>
-
-            <div className="space-y-4 mt-6">
-              {pieData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-slate-500">{item.name} Vehicles</span>
-                  </div>
-                  <span className="font-bold text-slate-700">{item.value}</span>
+          {/* Bottom Section: Live Zone Status (Zone Cards) & Search */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+             {/* Zone Cards */}
+             <div className="lg:col-span-3 space-y-4">
+                <div className="flex items-center gap-2">
+                   <Activity className="w-5 h-5 text-orange-500" />
+                   <h3 className="font-bold text-slate-700">Live Zone Overview</h3>
                 </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Admin Search Widget (Mini) */}
-          {isAdmin && (
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                <h3 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wider">Quick Search</h3>
-                <form onSubmit={handleSearch} className="flex flex-col gap-3">
-                    <Input 
-                        placeholder="Vehicle No." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-slate-50"
-                    />
-                    <Button type="submit" className="w-full bg-slate-900 text-white">Find Vehicle</Button>
-                </form>
-                {searchResult && (
-                    <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-md text-sm border border-green-100">
-                        <p className="font-bold">{searchResult.vehicle.number}</p>
-                        <p>Loc: {searchResult.zone.name}</p>
-                    </div>
-                )}
+                
+                {/* 4 columns as requested */}
+                <div className="max-h-[500px] overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                   {zones.map((zone) => (
+                     <ZoneCard key={zone.id} zone={zone} />
+                   ))}
+                </div>
              </div>
-          )}
+
+             {/* Admin Search Widget (Moved here) */}
+             <div className="lg:col-span-1">
+              {isAdmin && (
+                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-full">
+                    <h3 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wider">Quick Search</h3>
+                    <form onSubmit={handleSearch} className="flex flex-col gap-3">
+                        <Input 
+                            placeholder="Vehicle No." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="bg-slate-50"
+                        />
+                        <Button type="submit" className="w-full bg-slate-900 text-white">Find Vehicle</Button>
+                    </form>
+                    {searchResult && (
+                        <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-md text-sm border border-green-100">
+                            <p className="font-bold">{searchResult.vehicle.number}</p>
+                            <p>Loc: {searchResult.zone.name}</p>
+                        </div>
+                    )}
+                 </div>
+              )}
+             </div>
+          </div>
+
         </div>
       </div>
     </div>
