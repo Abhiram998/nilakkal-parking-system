@@ -16,6 +16,11 @@ export type ParkingZone = {
   capacity: number;
   occupied: number;
   vehicles: Vehicle[];
+  limits: {
+    heavy: number;
+    medium: number;
+    light: number;
+  };
   stats: {
     heavy: number;
     medium: number;
@@ -33,7 +38,7 @@ type ParkingContextType = {
   registerAdmin: (username: string, password: string, name: string, policeId: string) => boolean;
   logoutAdmin: () => void;
   addZone: (zone: Omit<ParkingZone, 'id' | 'occupied' | 'vehicles' | 'stats'>) => void;
-  updateZone: (id: string, data: Partial<Pick<ParkingZone, 'name' | 'capacity'>>) => void;
+  updateZone: (id: string, data: Partial<Pick<ParkingZone, 'name' | 'capacity' | 'limits'>>) => void;
   deleteZone: (id: string) => void;
 };
 
@@ -63,12 +68,18 @@ const INITIAL_ZONES: ParkingZone[] = Array.from({ length: ZONES_COUNT }, (_, i) 
     });
   }
 
+  // Distribute capacity roughly
+  const heavyLimit = Math.floor(ZONE_CAPACITY * 0.2);
+  const mediumLimit = Math.floor(ZONE_CAPACITY * 0.3);
+  const lightLimit = ZONE_CAPACITY - heavyLimit - mediumLimit;
+
   return {
     id: `Z${i + 1}`,
     name: `Nilakkal Zone ${i + 1}`,
     capacity: ZONE_CAPACITY,
     occupied: occupiedCount,
     vehicles,
+    limits: { heavy: heavyLimit, medium: mediumLimit, light: lightLimit },
     stats: { heavy, medium, light }
   };
 });
@@ -111,7 +122,7 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
     setZones([...zones, newZone]);
   };
 
-  const updateZone = (id: string, data: Partial<Pick<ParkingZone, 'name' | 'capacity'>>) => {
+  const updateZone = (id: string, data: Partial<Pick<ParkingZone, 'name' | 'capacity' | 'limits'>>) => {
     setZones(zones.map(z => z.id === id ? { ...z, ...data } : z));
   };
 

@@ -21,11 +21,24 @@ export default function Home() {
 
   // Chart Data Preparation
   const barChartData = zones.map(zone => {
-    // Calculate percentages for each vehicle type based on total capacity of the zone
-    // If capacity is 0, avoid division by zero
-    const heavyPct = zone.capacity > 0 ? (zone.stats.heavy / zone.capacity) * 100 : 0;
-    const mediumPct = zone.capacity > 0 ? (zone.stats.medium / zone.capacity) * 100 : 0;
-    const lightPct = zone.capacity > 0 ? (zone.stats.light / zone.capacity) * 100 : 0;
+    // Calculate percentages for each vehicle type based on specific limits if available, or total capacity
+    // If limits are available: Pct = (current / limit) * 100
+    // If only total capacity: Pct = (current / total) * 100 (This was the old behavior)
+    
+    let heavyPct = 0;
+    let mediumPct = 0;
+    let lightPct = 0;
+
+    if (zone.limits) {
+       heavyPct = zone.limits.heavy > 0 ? (zone.stats.heavy / zone.limits.heavy) * 100 : 0;
+       mediumPct = zone.limits.medium > 0 ? (zone.stats.medium / zone.limits.medium) * 100 : 0;
+       lightPct = zone.limits.light > 0 ? (zone.stats.light / zone.limits.light) * 100 : 0;
+    } else {
+       // Fallback for old data or if limits are missing
+       heavyPct = zone.capacity > 0 ? (zone.stats.heavy / zone.capacity) * 100 : 0;
+       mediumPct = zone.capacity > 0 ? (zone.stats.medium / zone.capacity) * 100 : 0;
+       lightPct = zone.capacity > 0 ? (zone.stats.light / zone.capacity) * 100 : 0;
+    }
 
     return {
       name: zone.name.replace('Nilakkal Zone ', 'Z'),
@@ -34,6 +47,7 @@ export default function Home() {
       Light: lightPct,
       occupied: zone.occupied,
       capacity: zone.capacity,
+      limits: zone.limits, // Pass limits to tooltip
       originalZone: zone // Store original zone object to access stats on hover
     };
   });
@@ -78,14 +92,14 @@ export default function Home() {
   };
 
   const TopCard = ({ title, value, subValue, dark = false, isVacancy = false }: any) => (
-    <div className={`rounded-xl p-6 shadow-sm border relative overflow-hidden group hover:shadow-md transition-all ${dark ? 'bg-[#1a233a] text-white border-none' : 'bg-white border-slate-100 text-slate-800'}`}>
-      <div className="flex justify-between items-start mb-4">
-        <span className={`font-medium ${dark ? 'text-slate-300' : 'text-slate-500'}`}>{title}</span>
+    <div className={`rounded-xl p-4 shadow-sm border relative overflow-hidden group hover:shadow-md transition-all ${dark ? 'bg-[#1a233a] text-white border-none' : 'bg-white border-slate-100 text-slate-800'}`}>
+      <div className="flex justify-between items-start mb-2">
+        <span className={`text-xs font-bold uppercase tracking-wider ${dark ? 'text-slate-300' : 'text-slate-500'}`}>{title}</span>
       </div>
-      <div className={`text-4xl font-bold mb-1 ${isVacancy ? 'text-green-500' : ''}`}>
+      <div className={`text-2xl font-bold mb-1 ${isVacancy ? 'text-green-500' : ''}`}>
         {value}
       </div>
-      {subValue && <div className={`text-sm ${dark ? 'text-slate-400' : 'text-slate-400'}`}>{subValue}</div>}
+      {subValue && <div className={`text-xs ${dark ? 'text-slate-400' : 'text-slate-400'}`}>{subValue}</div>}
     </div>
   );
 
@@ -226,13 +240,15 @@ export default function Home() {
                     tickLine={false} 
                     tick={{fill: '#64748b', fontSize: 12}} 
                     unit="%"
-                    domain={[0, 100]}
+                    domain={['auto', 'auto']} // Auto scale based on data
                   />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc' }}
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
+                        const originalZone = data.originalZone;
+                        
                         return (
                           <div className="bg-white p-3 border border-slate-100 shadow-xl rounded-lg text-sm">
                             <p className="font-bold text-slate-800 mb-2">{label}</p>
@@ -242,21 +258,27 @@ export default function Home() {
                                   <div className="w-2 h-2 rounded-full bg-[#1e293b]"></div>
                                   Heavy
                                 </span>
-                                <span className="font-mono font-medium">{data.Heavy.toFixed(1)}%</span>
+                                <span className="font-mono font-medium">
+                                  {originalZone.stats.heavy} / {originalZone.limits?.heavy || '-'} ({data.Heavy.toFixed(1)}%)
+                                </span>
                               </div>
                               <div className="flex items-center justify-between gap-4 text-xs">
                                 <span className="flex items-center gap-1.5 text-slate-500">
                                   <div className="w-2 h-2 rounded-full bg-[#f59e0b]"></div>
                                   Medium
                                 </span>
-                                <span className="font-mono font-medium">{data.Medium.toFixed(1)}%</span>
+                                <span className="font-mono font-medium">
+                                  {originalZone.stats.medium} / {originalZone.limits?.medium || '-'} ({data.Medium.toFixed(1)}%)
+                                </span>
                               </div>
                               <div className="flex items-center justify-between gap-4 text-xs">
                                 <span className="flex items-center gap-1.5 text-slate-500">
                                   <div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>
                                   Light
                                 </span>
-                                <span className="font-mono font-medium">{data.Light.toFixed(1)}%</span>
+                                <span className="font-mono font-medium">
+                                  {originalZone.stats.light} / {originalZone.limits?.light || '-'} ({data.Light.toFixed(1)}%)
+                                </span>
                               </div>
                             </div>
                           </div>

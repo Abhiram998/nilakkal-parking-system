@@ -10,7 +10,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Eye, Bus, Truck, Car, ChevronLeft, ChevronRight, Pause, Play, Plus, Pencil, Trash2 } from "lucide-react";
+import { Link } from "wouter";
+import { User, Eye, Bus, Truck, Car, ChevronLeft, ChevronRight, Pause, Play, Plus, Pencil, Trash2 } from "lucide-react";
 
 export default function Admin() {
   const { zones, totalCapacity, totalOccupied, addZone, updateZone, deleteZone } = useParking();
@@ -21,7 +22,11 @@ export default function Admin() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingZone, setEditingZone] = useState<ParkingZone | null>(null);
-  const [formData, setFormData] = useState({ name: "", capacity: 50 });
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    capacity: 50,
+    limits: { heavy: 10, medium: 15, light: 25 }
+  });
   
   // Slideshow state
   const [pageIndex, setPageIndex] = useState(0);
@@ -67,7 +72,15 @@ export default function Admin() {
 
   const handleEditClick = (zone: ParkingZone) => {
     setEditingZone(zone);
-    setFormData({ name: zone.name, capacity: zone.capacity });
+    setFormData({ 
+      name: zone.name, 
+      capacity: zone.capacity,
+      limits: zone.limits || { 
+        heavy: Math.floor(zone.capacity * 0.2), 
+        medium: Math.floor(zone.capacity * 0.3), 
+        light: zone.capacity - Math.floor(zone.capacity * 0.2) - Math.floor(zone.capacity * 0.3)
+      }
+    });
     setIsEditOpen(true);
     setIsPaused(true);
   };
@@ -89,13 +102,27 @@ export default function Admin() {
   const handleCreate = () => {
     addZone(formData);
     setIsCreateOpen(false);
-    setFormData({ name: "", capacity: 50 });
+    setFormData({ 
+      name: "", 
+      capacity: 50,
+      limits: { heavy: 10, medium: 15, light: 25 }
+    });
   };
 
   const openCreateDialog = () => {
-    setFormData({ name: "New Zone", capacity: 50 });
+    setFormData({ 
+      name: "New Zone", 
+      capacity: 50,
+      limits: { heavy: 10, medium: 15, light: 25 }
+    });
     setIsCreateOpen(true);
     setIsPaused(true);
+  };
+
+  const updateLimit = (type: 'heavy' | 'medium' | 'light', value: number) => {
+    const newLimits = { ...formData.limits, [type]: value };
+    const newCapacity = newLimits.heavy + newLimits.medium + newLimits.light;
+    setFormData({ ...formData, limits: newLimits, capacity: newCapacity });
   };
 
   const currentZones = zones.slice(pageIndex * ITEMS_PER_PAGE, (pageIndex + 1) * ITEMS_PER_PAGE);
@@ -109,6 +136,11 @@ export default function Admin() {
           <div className="text-xs text-white/60">CONTROL ROOM • {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}</div>
         </div>
         <div className="flex gap-4 items-center">
+          <Link href="/admin/profile">
+            <Button className="bg-white/10 text-white hover:bg-white/20 rounded-none gap-2 border border-white/20">
+              <User className="w-4 h-4" /> Profile
+            </Button>
+          </Link>
           <Button onClick={openCreateDialog} className="bg-white text-black hover:bg-white/90 rounded-none gap-2">
             <Plus className="w-4 h-4" /> Add Zone
           </Button>
@@ -317,15 +349,53 @@ export default function Admin() {
                 className="col-span-3 bg-black border-white text-white" 
               />
             </div>
+            
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="capacity" className="text-right">Capacity</Label>
+              <Label className="text-right text-xs uppercase text-white/70 col-span-4 text-center border-b border-white/20 pb-2 mb-2">Vehicle Type Limits</Label>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="limit-heavy" className="text-right flex items-center justify-end gap-2">
+                <Bus className="w-3 h-3" /> Heavy
+              </Label>
               <Input 
-                id="capacity" 
+                id="limit-heavy" 
                 type="number"
-                value={formData.capacity} 
-                onChange={(e) => setFormData({...formData, capacity: parseInt(e.target.value)})}
+                value={formData.limits.heavy} 
+                onChange={(e) => updateLimit('heavy', parseInt(e.target.value) || 0)}
                 className="col-span-3 bg-black border-white text-white" 
               />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="limit-medium" className="text-right flex items-center justify-end gap-2">
+                <Truck className="w-3 h-3" /> Medium
+              </Label>
+              <Input 
+                id="limit-medium" 
+                type="number"
+                value={formData.limits.medium} 
+                onChange={(e) => updateLimit('medium', parseInt(e.target.value) || 0)}
+                className="col-span-3 bg-black border-white text-white" 
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="limit-light" className="text-right flex items-center justify-end gap-2">
+                <Car className="w-3 h-3" /> Light
+              </Label>
+              <Input 
+                id="limit-light" 
+                type="number"
+                value={formData.limits.light} 
+                onChange={(e) => updateLimit('light', parseInt(e.target.value) || 0)}
+                className="col-span-3 bg-black border-white text-white" 
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4 mt-2 pt-2 border-t border-white/20">
+              <Label htmlFor="capacity" className="text-right font-bold">Total Capacity</Label>
+              <div className="col-span-3 text-xl font-bold pl-3">
+                {formData.capacity}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -351,15 +421,53 @@ export default function Admin() {
                 className="col-span-3 bg-black border-white text-white" 
               />
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="new-capacity" className="text-right">Capacity</Label>
+              <Label className="text-right text-xs uppercase text-white/70 col-span-4 text-center border-b border-white/20 pb-2 mb-2">Vehicle Type Limits</Label>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-limit-heavy" className="text-right flex items-center justify-end gap-2">
+                <Bus className="w-3 h-3" /> Heavy
+              </Label>
               <Input 
-                id="new-capacity" 
+                id="new-limit-heavy" 
                 type="number"
-                value={formData.capacity} 
-                onChange={(e) => setFormData({...formData, capacity: parseInt(e.target.value)})}
+                value={formData.limits.heavy} 
+                onChange={(e) => updateLimit('heavy', parseInt(e.target.value) || 0)}
                 className="col-span-3 bg-black border-white text-white" 
               />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-limit-medium" className="text-right flex items-center justify-end gap-2">
+                <Truck className="w-3 h-3" /> Medium
+              </Label>
+              <Input 
+                id="new-limit-medium" 
+                type="number"
+                value={formData.limits.medium} 
+                onChange={(e) => updateLimit('medium', parseInt(e.target.value) || 0)}
+                className="col-span-3 bg-black border-white text-white" 
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-limit-light" className="text-right flex items-center justify-end gap-2">
+                <Car className="w-3 h-3" /> Light
+              </Label>
+              <Input 
+                id="new-limit-light" 
+                type="number"
+                value={formData.limits.light} 
+                onChange={(e) => updateLimit('light', parseInt(e.target.value) || 0)}
+                className="col-span-3 bg-black border-white text-white" 
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4 mt-2 pt-2 border-t border-white/20">
+              <Label className="text-right font-bold">Total Capacity</Label>
+              <div className="col-span-3 text-xl font-bold pl-3">
+                {formData.capacity}
+              </div>
             </div>
           </div>
           <DialogFooter>
