@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell 
+  PieChart, Pie, Cell, LabelList
 } from 'recharts';
 
 export default function Home() {
@@ -135,11 +135,12 @@ export default function Home() {
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-slate-700">Live Zone Status (Occupancy %)</h3>
             </div>
-            <div className="h-[250px] w-full">
+            <div className="h-[350px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={barChartData} 
-                  barSize={12}
+                  barSize={45}
+                  margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
                   onMouseMove={(state: any) => {
                     if (state.activePayload) {
                       setHoveredZone(state.activePayload[0].payload.originalZone);
@@ -150,22 +151,75 @@ export default function Home() {
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#64748b', fontSize: 13, fontWeight: 500}} 
+                    dy={10} 
+                  />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false} 
                     tick={{fill: '#64748b', fontSize: 12}} 
                     unit="%"
+                    domain={[0, 100]}
                   />
                   <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                    cursor={{ fill: '#f1f5f9' }}
-                    formatter={(value: number) => [`${value.toFixed(1)}%`, 'Occupancy']}
+                    cursor={{ fill: '#f8fafc' }}
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        const totalOccupancy = (data.Heavy + data.Medium + data.Light).toFixed(1);
+                        return (
+                          <div className="bg-white p-3 border border-slate-100 shadow-xl rounded-lg text-sm">
+                            <p className="font-bold text-slate-800 mb-2">{label}</p>
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between gap-4 text-xs">
+                                <span className="flex items-center gap-1.5 text-slate-500">
+                                  <div className="w-2 h-2 rounded-full bg-[#1e293b]"></div>
+                                  Heavy
+                                </span>
+                                <span className="font-mono font-medium">{data.Heavy.toFixed(1)}%</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-4 text-xs">
+                                <span className="flex items-center gap-1.5 text-slate-500">
+                                  <div className="w-2 h-2 rounded-full bg-[#f59e0b]"></div>
+                                  Medium
+                                </span>
+                                <span className="font-mono font-medium">{data.Medium.toFixed(1)}%</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-4 text-xs">
+                                <span className="flex items-center gap-1.5 text-slate-500">
+                                  <div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>
+                                  Light
+                                </span>
+                                <span className="font-mono font-medium">{data.Light.toFixed(1)}%</span>
+                              </div>
+                              <div className="pt-2 mt-2 border-t flex justify-between font-bold text-slate-800">
+                                <span>Total</span>
+                                <span>{totalOccupancy}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
                   />
-                  {/* Separate bars for each type - no stackId */}
-                  <Bar dataKey="Heavy" fill="#1e293b" radius={[4, 4, 0, 0]} name="Heavy" />
-                  <Bar dataKey="Medium" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Medium" />
-                  <Bar dataKey="Light" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Light" />
+                  {/* Stacked bars for cleaner look and more space */}
+                  <Bar dataKey="Heavy" stackId="a" fill="#1e293b" radius={[0, 0, 4, 4]} name="Heavy" />
+                  <Bar dataKey="Medium" stackId="a" fill="#f59e0b" name="Medium" />
+                  <Bar dataKey="Light" stackId="a" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Light">
+                    <LabelList 
+                      dataKey={(entry: any) => {
+                         const total = entry.Heavy + entry.Medium + entry.Light;
+                         return total > 5 ? `${Math.round(total)}%` : '';
+                      }} 
+                      position="top" 
+                      style={{ fill: '#475569', fontSize: 12, fontWeight: 'bold' }} 
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -194,7 +248,7 @@ export default function Home() {
              </div>
              
              {/* 5 columns as requested */}
-             <div className="h-[400px] overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+             <div className="max-h-[500px] overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                 {zones.map((zone) => (
                   <ZoneCard key={zone.id} zone={zone} />
                 ))}

@@ -39,59 +39,47 @@ export function ZoneCard({ zone, detailed = false }: { zone: ParkingZone, detail
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-card p-5 transition-all hover:shadow-md cursor-pointer",
+        "group relative overflow-hidden rounded-lg border bg-card p-3 transition-all hover:shadow-md cursor-pointer",
         isFull ? "border-red-200 bg-red-50/30 dark:bg-red-900/10" : "border-border hover:border-primary/30"
       )}
     >
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="font-bold text-lg text-foreground">{zone.name}</h3>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-            Status: <span className={cn(
-              "font-bold",
-              isFull ? "text-destructive" : isNearFull ? "text-orange-500" : "text-green-600"
-            )}>
-              {isFull ? "FULL" : isNearFull ? "FILLING FAST" : "AVAILABLE"}
-            </span>
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center gap-2">
           <div className={cn(
-            "h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border",
+            "h-6 w-6 rounded-md flex items-center justify-center text-[10px] font-bold border",
             isFull 
               ? "bg-destructive text-destructive-foreground border-destructive/20" 
               : "bg-primary/10 text-primary border-primary/10"
           )}>
             {zone.id}
           </div>
-          
-          {/* Three Dot Menu - Only for Admins in Detailed View */}
-          {detailed && isAdmin && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setShowVehicles(true)}>
-                  <Car className="mr-2 h-4 w-4" /> View Vehicles
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <div>
+            <h3 className="font-bold text-sm text-foreground leading-none">{zone.name.replace('Nilakkal Zone ', 'Zone ')}</h3>
+          </div>
         </div>
+        
+        <span className={cn(
+          "text-[10px] font-bold px-1.5 py-0.5 rounded-full border",
+          isFull 
+            ? "bg-red-100 text-red-700 border-red-200" 
+            : isNearFull 
+              ? "bg-orange-100 text-orange-700 border-orange-200" 
+              : "bg-green-100 text-green-700 border-green-200"
+        )}>
+          {isFull ? "FULL" : isNearFull ? "FAST" : "OPEN"}
+        </span>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Occupancy</span>
-          <span className="font-medium tabular-nums">
-            {zone.occupied} <span className="text-muted-foreground">/ {zone.capacity}</span>
-          </span>
+      <div className="space-y-1.5">
+        <div className="flex justify-between text-xs items-end">
+          <span className="text-muted-foreground font-medium">Occupancy</span>
+          <div className="flex items-baseline gap-1">
+            <span className="font-bold tabular-nums text-foreground">{zone.occupied}</span>
+            <span className="text-[10px] text-muted-foreground">/ {zone.capacity}</span>
+          </div>
         </div>
         <Progress value={percentage} className={cn(
-          "h-2",
+          "h-1.5",
           isFull ? "bg-red-100 [&>div]:bg-red-500" : "bg-primary/10 [&>div]:bg-primary"
         )} />
       </div>
