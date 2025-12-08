@@ -20,15 +20,23 @@ export default function Home() {
   const [hoveredZone, setHoveredZone] = useState<any>(null);
 
   // Chart Data Preparation
-  const barChartData = zones.map(zone => ({
-    name: zone.name.replace('Nilakkal Zone ', 'Z'),
-    Heavy: zone.stats.heavy,
-    Medium: zone.stats.medium,
-    Light: zone.stats.light,
-    occupied: zone.occupied,
-    capacity: zone.capacity,
-    originalZone: zone // Store original zone object to access stats on hover
-  }));
+  const barChartData = zones.map(zone => {
+    // Calculate percentages for each vehicle type based on total capacity of the zone
+    // If capacity is 0, avoid division by zero
+    const heavyPct = zone.capacity > 0 ? (zone.stats.heavy / zone.capacity) * 100 : 0;
+    const mediumPct = zone.capacity > 0 ? (zone.stats.medium / zone.capacity) * 100 : 0;
+    const lightPct = zone.capacity > 0 ? (zone.stats.light / zone.capacity) * 100 : 0;
+
+    return {
+      name: zone.name.replace('Nilakkal Zone ', 'Z'),
+      Heavy: heavyPct,
+      Medium: mediumPct,
+      Light: lightPct,
+      occupied: zone.occupied,
+      capacity: zone.capacity,
+      originalZone: zone // Store original zone object to access stats on hover
+    };
+  });
 
   // Calculate Pie Data based on hovered zone or total
   const activeStats = hoveredZone ? hoveredZone.stats : {
@@ -69,12 +77,12 @@ export default function Home() {
     setSearchResult(null);
   };
 
-  const TopCard = ({ title, value, subValue, dark = false }: any) => (
+  const TopCard = ({ title, value, subValue, dark = false, isVacancy = false }: any) => (
     <div className={`rounded-xl p-6 shadow-sm border relative overflow-hidden group hover:shadow-md transition-all ${dark ? 'bg-[#1a233a] text-white border-none' : 'bg-white border-slate-100 text-slate-800'}`}>
       <div className="flex justify-between items-start mb-4">
         <span className={`font-medium ${dark ? 'text-slate-300' : 'text-slate-500'}`}>{title}</span>
       </div>
-      <div className="text-4xl font-bold mb-1">
+      <div className={`text-4xl font-bold mb-1 ${isVacancy ? 'text-green-500' : ''}`}>
         {value}
       </div>
       {subValue && <div className={`text-sm ${dark ? 'text-slate-400' : 'text-slate-400'}`}>{subValue}</div>}
@@ -103,6 +111,7 @@ export default function Home() {
           title="Vacancy" 
           value={totalVacancy}
           dark={true}
+          isVacancy={true}
         />
         {/* Card 2: Occupancy (was Share) */}
         <TopCard 
@@ -124,13 +133,13 @@ export default function Home() {
           {/* Bar Chart Section (The "Result" graph) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-slate-700">Live Zone Status</h3>
+              <h3 className="font-bold text-slate-700">Live Zone Status (Occupancy %)</h3>
             </div>
             <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={barChartData} 
-                  barSize={20}
+                  barSize={12}
                   onMouseMove={(state: any) => {
                     if (state.activePayload) {
                       setHoveredZone(state.activePayload[0].payload.originalZone);
@@ -142,14 +151,21 @@ export default function Home() {
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#64748b', fontSize: 12}} 
+                    unit="%"
+                  />
                   <Tooltip 
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                     cursor={{ fill: '#f1f5f9' }}
+                    formatter={(value: number) => [`${value.toFixed(1)}%`, 'Occupancy']}
                   />
-                  <Bar dataKey="Heavy" fill="#1e293b" stackId="a" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Medium" fill="#f59e0b" stackId="a" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Light" fill="#3b82f6" stackId="a" radius={[4, 4, 0, 0]} />
+                  {/* Separate bars for each type - no stackId */}
+                  <Bar dataKey="Heavy" fill="#1e293b" radius={[4, 4, 0, 0]} name="Heavy" />
+                  <Bar dataKey="Medium" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Medium" />
+                  <Bar dataKey="Light" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Light" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -177,9 +193,8 @@ export default function Home() {
                 <h3 className="font-bold text-slate-700">Live Zone Overview</h3>
              </div>
              
-             {/* Using a grid for zones, but maybe more compact than the full page version? 
-                 Actually the ZoneCard is already quite good. */}
-             <div className="h-[400px] overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+             {/* 5 columns as requested */}
+             <div className="h-[400px] overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {zones.map((zone) => (
                   <ZoneCard key={zone.id} zone={zone} />
                 ))}
