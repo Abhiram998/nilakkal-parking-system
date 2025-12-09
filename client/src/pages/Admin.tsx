@@ -12,10 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { User, Eye, Bus, Truck, Car, ChevronLeft, ChevronRight, Pause, Play, Plus, Pencil, Trash2, FileText, Download } from "lucide-react";
-import PoliceBackup, { VehicleRecord } from "@/components/PoliceBackup";
 
 export default function Admin() {
-  const { zones, totalCapacity, totalOccupied, addZone, updateZone, deleteZone, restoreData } = useParking();
+  const { zones, totalCapacity, totalOccupied, addZone, updateZone, deleteZone } = useParking();
   const [selectedZone, setSelectedZone] = useState<ParkingZone | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   
@@ -128,16 +127,6 @@ export default function Admin() {
 
   const currentZones = zones.slice(pageIndex * ITEMS_PER_PAGE, (pageIndex + 1) * ITEMS_PER_PAGE);
 
-  // Helper for PoliceBackup
-  const getRecords = (): VehicleRecord[] => {
-    return zones.flatMap(z => z.vehicles.map(v => ({
-      plate: v.number,
-      zone: z.name,
-      timeIn: v.entryTime.toISOString(),
-      timeOut: null 
-    })));
-  };
-
   return (
     <div className="min-h-screen bg-black text-white font-mono p-4 flex flex-col text-sm">
       {/* Header */}
@@ -173,15 +162,6 @@ export default function Admin() {
           <div className="text-[10px] uppercase tracking-widest mb-1 text-white/70">Total Vacancy (Available Spots)</div>
           <div className="text-3xl font-bold text-green-500">{totalCapacity - totalOccupied}</div>
         </div>
-      </div>
-
-      {/* Police Backup Component */}
-      <div className="mb-4">
-        <PoliceBackup 
-          getRecords={getRecords} 
-          onRestore={restoreData} 
-          appName="nilakkal-police-admin" 
-        />
       </div>
 
       {/* Main Table Container - Flex grow to fill space */}

@@ -9,6 +9,7 @@ import Layout from "@/components/layout/Layout";
 import Home from "@/pages/Home";
 import Admin from "@/pages/Admin";
 import Report from "@/pages/Report";
+import Backup from "@/pages/Backup";
 import Login from "@/pages/Login";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminProfile from "@/pages/AdminProfile";
@@ -24,6 +25,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/report" component={Report} />
+      <Route path="/backup" component={Backup} />
       <Route path="/admin" component={Admin} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/profile" component={AdminProfile} />
