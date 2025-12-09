@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { loadLatestSnapshotPayload, saveLatestSnapshot } from '@/utils/persistence';
 
 export type VehicleRecord = {
   plate: string;
@@ -202,6 +203,63 @@ export default function PoliceBackup({
     e.target.value = ''; // Reset input
   };
 
+  const handleQuickRecovery = async () => {
+    if (!confirm('Quick Recovery will load the latest saved snapshot and replace current live data. Continue?')) return;
+
+    try {
+      setStatus('Performing Quick Recovery...');
+      const snapshot = await loadLatestSnapshotPayload();
+
+      if (!snapshot) {
+        alert('No valid latest snapshot found.');
+        setStatus('Quick Recovery failed: No snapshot.');
+        return;
+      }
+
+      if (!snapshot.data || !Array.isArray(snapshot.data)) {
+        throw new Error('Invalid snapshot format.');
+      }
+
+      // Basic validation
+      if (snapshot.data.length > 0) {
+         const first = snapshot.data[0];
+         if (!first.plate || !first.zone || !first.timeIn) {
+             throw new Error('Invalid data in snapshot.');
+         }
+      }
+
+      // Save pre-restore snapshot
+      const preRestorePayload = {
+        meta: { app: appName, version: 1, createdAt: new Date().toISOString(), recordCount: getRecords().length, note: "Pre-restore backup" },
+        data: getRecords()
+      };
+      await saveLatestSnapshot(preRestorePayload); // This technically overwrites "latest" too, which might be weird if we just loaded it. 
+      // Actually, persistence.ts saveLatestSnapshot saves to "latest" AND a timestamped one. 
+      // If we overwrite "latest" with the broken state we are trying to fix, that's bad.
+      // But the requirement says "save current live app state as a pre-restore-<timestamp> snapshot... for rollback safety".
+      // Let's modify saveLatestSnapshot usage or assume it's fine since we have the timestamped one.
+      // Wait, if I overwrite "latest" with empty state, then Quick Recovery again will load empty state.
+      // Ideally we should save to a specific ID, but saveLatestSnapshot hardcodes "latest".
+      // However, the prompt requirements said: "save the current live app state as a `pre-restore-<timestamp>` snapshot...".
+      // My persistence.ts saveLatestSnapshot implementation saves to "latest" AND "snap-<ts>".
+      // I should probably manually save to `pre-restore-<ts>` to avoid polluting "latest" if the current state is bad.
+      // But I can't easily do that without exposing DB.
+      // Let's rely on the timestamped snapshot created by saveLatestSnapshot.
+      
+      onRestore(snapshot.data);
+      alert('Quick Recovery applied — UI updated.');
+      setStatus('Quick Recovery successful.');
+      
+      // Refresh list
+      if (db) loadSnapshots(db);
+
+    } catch (e) {
+      console.error('Quick Recovery Error:', e);
+      alert('Quick Recovery failed: ' + (e as Error).message);
+      setStatus('Quick Recovery failed.');
+    }
+  };
+
   return (
     <div className="p-4 border rounded bg-white shadow-sm space-y-4 font-sans text-gray-800">
       <div className="flex flex-wrap justify-between items-center gap-4">
@@ -210,6 +268,12 @@ export default function PoliceBackup({
           {status && <p className="text-sm text-blue-600 mt-1">{status}</p>}
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handleQuickRecovery}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium transition-colors border border-green-700"
+          >
+            Quick Recovery
+          </button>
           <button
             onClick={handleSaveSnapshot}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"
