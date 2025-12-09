@@ -41,6 +41,7 @@ type ParkingContextType = {
   addZone: (zone: Omit<ParkingZone, 'id' | 'occupied' | 'vehicles' | 'stats'>) => void;
   updateZone: (id: string, data: Partial<Pick<ParkingZone, 'name' | 'capacity' | 'limits'>>) => void;
   deleteZone: (id: string) => void;
+  restoreData: (records: any[]) => void;
 };
 
 const ParkingContext = createContext<ParkingContextType | undefined>(undefined);
@@ -236,8 +237,52 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
   const totalCapacity = zones.reduce((acc, z) => acc + z.capacity, 0);
   const totalOccupied = zones.reduce((acc, z) => acc + z.occupied, 0);
 
+  const restoreData = (records: any[]) => {
+    // Basic restore logic: Clear current vehicles and repopulate from records
+    // In a real app with zones, we'd need to map zones correctly.
+    // For this mockup, we'll try to map back to existing zones or default to Z1
+    
+    // Reset zones
+    const newZones: ParkingZone[] = INITIAL_ZONES.map(z => ({
+      ...z,
+      occupied: 0,
+      vehicles: [],
+      stats: { heavy: 0, medium: 0, light: 0 }
+    }));
+
+    records.forEach(rec => {
+      // Find zone
+      const zoneName = rec.zone;
+      let zone = newZones.find(z => z.name === zoneName) || newZones.find(z => z.id === rec.zone); // Try name or ID match
+      
+      if (!zone && rec.zone) {
+         // Try lenient match
+         zone = newZones.find(z => z.name.includes(rec.zone) || rec.zone.includes(z.id));
+      }
+      
+      if (!zone) zone = newZones[0]; // Fallback
+
+      // Reconstruct vehicle
+      const vehicle: Vehicle = {
+        number: rec.plate,
+        entryTime: new Date(rec.timeIn),
+        zoneId: zone.id,
+        ticketId: `RES-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        type: 'light', // Default since we might not have it in minimal record, or infer
+        slot: undefined
+      };
+
+      // Add to zone
+      zone.vehicles.push(vehicle);
+      zone.occupied++;
+      zone.stats.light++; // Default stats increment
+    });
+
+    setZones(newZones);
+  };
+
   return (
-    <ParkingContext.Provider value={{ zones, enterVehicle, totalCapacity, totalOccupied, isAdmin, loginAdmin, registerAdmin, logoutAdmin, addZone, updateZone, deleteZone }}>
+    <ParkingContext.Provider value={{ zones, enterVehicle, totalCapacity, totalOccupied, isAdmin, loginAdmin, registerAdmin, logoutAdmin, addZone, updateZone, deleteZone, restoreData }}>
       {children}
     </ParkingContext.Provider>
   );
