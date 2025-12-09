@@ -334,6 +334,9 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
     }));
 
     records.forEach(rec => {
+      // Skip if vehicle has checked out
+      if (rec.timeOut) return;
+
       // Find zone
       const zoneName = rec.zone;
       let zone = newZones.find(z => z.name === zoneName) || newZones.find(z => z.id === rec.zone); // Try name or ID match
@@ -344,6 +347,20 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
       }
       
       if (!zone) zone = newZones[0]; // Fallback
+
+      // Enforce capacity limit
+      if (zone.occupied >= zone.capacity) {
+        // Try to find another zone with space? Or just skip?
+        // For strict "do not exceed capacity", we skip or find another.
+        // Let's try to find any open zone to rescue the data, otherwise skip.
+        const backupZone = newZones.find(z => z.occupied < z.capacity);
+        if (backupZone) {
+          zone = backupZone;
+        } else {
+          console.warn(`Cannot restore vehicle ${rec.plate}: All zones full.`);
+          return;
+        }
+      }
 
       // Reconstruct vehicle
       const vehicle: Vehicle = {
