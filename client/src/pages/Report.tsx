@@ -105,7 +105,7 @@ export default function Report() {
                 <SelectTrigger>
                   <SelectValue placeholder="Select Zone" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px]">
                   <SelectItem value="all">All Zones</SelectItem>
                   {zones.map(zone => (
                     <SelectItem key={zone.id} value={zone.id}>{zone.name}</SelectItem>
