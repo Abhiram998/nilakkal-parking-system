@@ -443,8 +443,11 @@ export default function Home() {
         </div>
       </div>
 
-      <Dialog open={isTicketOpen} onOpenChange={setIsTicketOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      <Dialog open={isTicketOpen} onOpenChange={setIsTicketOpen} modal={false}>
+        <DialogContent 
+          hideOverlay 
+          className="sm:max-w-[425px] fixed top-4 right-4 left-auto translate-x-0 translate-y-0 data-[state=open]:slide-in-from-left-auto data-[state=open]:slide-in-from-top-0 data-[state=closed]:slide-out-to-right-full data-[state=closed]:slide-out-to-top-0"
+        >
           <DialogHeader>
             <DialogTitle>Generate Parking Ticket</DialogTitle>
           </DialogHeader>
