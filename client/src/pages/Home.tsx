@@ -312,6 +312,7 @@ export default function Home() {
                     tick={{fill: '#64748b', fontSize: 12}} 
                     unit="%"
                     domain={[0, 100]} // Fixed scale 0-100%
+                    allowDataOverflow={true}
                   />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc' }}
@@ -330,7 +331,7 @@ export default function Home() {
                                   Heavy
                                 </span>
                                 <span className="font-mono font-medium">
-                                  {originalZone.stats.heavy} / {originalZone.limits?.heavy || '-'} ({data.Heavy.toFixed(1)}%)
+                                  {originalZone.stats.heavy} / {originalZone.limits?.heavy || '-'} ({data.Heavy.toFixed(1)}%{data.Heavy > 100 ? " — OVER 100%" : ""})
                                 </span>
                               </div>
                               <div className="flex items-center justify-between gap-4 text-xs">
@@ -339,7 +340,7 @@ export default function Home() {
                                   Medium
                                 </span>
                                 <span className="font-mono font-medium">
-                                  {originalZone.stats.medium} / {originalZone.limits?.medium || '-'} ({data.Medium.toFixed(1)}%)
+                                  {originalZone.stats.medium} / {originalZone.limits?.medium || '-'} ({data.Medium.toFixed(1)}%{data.Medium > 100 ? " — OVER 100%" : ""})
                                 </span>
                               </div>
                               <div className="flex items-center justify-between gap-4 text-xs">
@@ -348,7 +349,7 @@ export default function Home() {
                                   Light
                                 </span>
                                 <span className="font-mono font-medium">
-                                  {originalZone.stats.light} / {originalZone.limits?.light || '-'} ({data.Light.toFixed(1)}%)
+                                  {originalZone.stats.light} / {originalZone.limits?.light || '-'} ({data.Light.toFixed(1)}%{data.Light > 100 ? " — OVER 100%" : ""})
                                 </span>
                               </div>
                             </div>
