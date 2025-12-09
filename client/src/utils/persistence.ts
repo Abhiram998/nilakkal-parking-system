@@ -3,6 +3,7 @@ export type VehicleRecord = {
   zone: string;
   timeIn: string;
   timeOut?: string | null;
+  type?: 'heavy' | 'medium' | 'light';
 };
 
 const DB_NAME = "nilakkal-police-events-db";

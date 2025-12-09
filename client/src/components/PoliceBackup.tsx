@@ -6,6 +6,7 @@ export type VehicleRecord = {
   zone: string;
   timeIn: string;
   timeOut?: string | null;
+  type?: 'heavy' | 'medium' | 'light';
 };
 
 type BackupSnapshot = {

@@ -159,7 +159,8 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
         plate: v.number,
         zone: z.name,
         timeIn: v.entryTime.toISOString(),
-        timeOut: null
+        timeOut: null,
+        type: v.type
       }))
     );
     return {
@@ -218,6 +219,12 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
           if (isAdding && z.occupied < z.capacity) {
             const typeRand = Math.random();
             const type: VehicleType = typeRand > 0.8 ? 'heavy' : typeRand > 0.5 ? 'medium' : 'light';
+            
+            // Check type limit
+            if (z.stats[type] >= z.limits[type]) {
+              return z; // Cannot add this type
+            }
+
             const newVehicle: Vehicle = {
               number: `KL-${Math.floor(Math.random()*99)}-NEW-${Math.floor(1000+Math.random()*9000)}`,
               entryTime: new Date(),
@@ -260,16 +267,22 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
 
     if (zoneId) {
       targetZoneIndex = zones.findIndex(z => z.id === zoneId);
-      if (targetZoneIndex !== -1 && zones[targetZoneIndex].occupied >= zones[targetZoneIndex].capacity) {
-        return { success: false, message: `Zone ${zones[targetZoneIndex].name} is full!` };
+      if (targetZoneIndex !== -1) {
+        const zone = zones[targetZoneIndex];
+        if (zone.occupied >= zone.capacity) {
+          return { success: false, message: `Zone ${zone.name} is full!` };
+        }
+        if (zone.stats[type] >= zone.limits[type]) {
+           return { success: false, message: `Zone ${zone.name} is full for ${type} vehicles!` };
+        }
       }
     } else {
-      // Find first available zone
-      targetZoneIndex = zones.findIndex(z => z.occupied < z.capacity);
+      // Find first available zone that has capacity AND type capacity
+      targetZoneIndex = zones.findIndex(z => z.occupied < z.capacity && z.stats[type] < z.limits[type]);
     }
     
     if (targetZoneIndex === -1) {
-      return { success: false, message: zoneId ? "Zone not found!" : "All parking zones are full!" };
+      return { success: false, message: zoneId ? "Zone not found or full!" : `All parking zones are full for ${type} vehicles!` };
     }
 
     const zone = zones[targetZoneIndex];
@@ -301,7 +314,8 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
       plate: vehicleNumber,
       zone: zone.name,
       timeIn: new Date().toISOString(),
-      timeOut: null
+      timeOut: null,
+      type
     }).catch(e => console.error("Failed to persist event", e));
 
     return { 
@@ -349,15 +363,16 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
       if (!zone) zone = newZones[0]; // Fallback
 
       // Enforce capacity limit
-      if (zone.occupied >= zone.capacity) {
-        // Try to find another zone with space? Or just skip?
-        // For strict "do not exceed capacity", we skip or find another.
-        // Let's try to find any open zone to rescue the data, otherwise skip.
-        const backupZone = newZones.find(z => z.occupied < z.capacity);
+      const rawType = rec.type;
+      const vehicleType: VehicleType = (rawType === 'heavy' || rawType === 'medium' || rawType === 'light') ? rawType : 'light';
+      
+      if (zone.occupied >= zone.capacity || zone.stats[vehicleType] >= zone.limits[vehicleType]) {
+        // Try to find another zone with space for this type
+        const backupZone = newZones.find(z => z.occupied < z.capacity && z.stats[vehicleType] < z.limits[vehicleType]);
         if (backupZone) {
           zone = backupZone;
         } else {
-          console.warn(`Cannot restore vehicle ${rec.plate}: All zones full.`);
+          console.warn(`Cannot restore vehicle ${rec.plate}: All zones full for type ${vehicleType}.`);
           return;
         }
       }
@@ -368,14 +383,14 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
         entryTime: new Date(rec.timeIn),
         zoneId: zone.id,
         ticketId: `RES-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-        type: 'light', // Default since we might not have it in minimal record, or infer
+        type: vehicleType,
         slot: undefined
       };
 
       // Add to zone
       zone.vehicles.push(vehicle);
       zone.occupied++;
-      zone.stats.light++; // Default stats increment
+      zone.stats[vehicleType]++; // Correct stats increment
     });
 
     setZones(newZones);
