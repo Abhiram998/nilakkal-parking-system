@@ -198,48 +198,48 @@ export default function Home() {
         />
         
         {/* Card 4: Composition (Moved from right column) */}
-        <div className="rounded-xl p-3 shadow-sm border bg-white border-slate-100 flex flex-col justify-between h-full">
-           <div className="flex justify-between items-start">
-             <span className="font-medium text-slate-500 text-sm">Composition</span>
-             <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
-               {hoveredZone ? `Z${hoveredZone.name.replace('Nilakkal Zone ', '')}` : "Total"}
-             </span>
+        <div className="rounded-xl p-3 shadow-sm border bg-white border-slate-100 h-full flex items-center gap-3">
+           <div className="w-[70px] h-[70px] relative flex-shrink-0">
+             <ResponsiveContainer width="100%" height="100%">
+               <PieChart>
+                 <Pie
+                   data={pieData}
+                   innerRadius={25}
+                   outerRadius={35}
+                   paddingAngle={0}
+                   dataKey="value"
+                   stroke="none"
+                 >
+                   {pieData.map((entry, index) => (
+                     <Cell key={`cell-${index}`} fill={entry.color} />
+                   ))}
+                 </Pie>
+               </PieChart>
+             </ResponsiveContainer>
+             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-xs font-bold text-slate-700">{activeOccupancyRate}%</span>
+             </div>
            </div>
-           
-           <div className="flex items-center gap-2">
-              <div className="w-[50px] h-[50px] relative flex-shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      innerRadius={15}
-                      outerRadius={25}
-                      paddingAngle={0}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                   <span className="text-[10px] font-bold text-slate-700">{activeOccupancyRate}%</span>
-                </div>
-              </div>
-              
-              <div className="flex-1 space-y-0.5">
-                 {pieData.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between text-[10px]">
-                       <div className="flex items-center gap-1">
-                          <div className="w-1 h-1 rounded-full" style={{ backgroundColor: item.color }} />
-                          <span className="text-slate-500">{item.name}</span>
-                       </div>
-                       <span className="font-bold text-slate-700">{item.value}</span>
-                    </div>
-                 ))}
-              </div>
+
+           <div className="flex-1 flex flex-col justify-center gap-1">
+             <div className="flex justify-between items-center border-b border-slate-50 pb-1 mb-1">
+               <span className="font-medium text-slate-500 text-xs">Composition</span>
+               <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
+                 {hoveredZone ? `Z${hoveredZone.name.replace('Nilakkal Zone ', '')}` : "Total"}
+               </span>
+             </div>
+             
+             <div className="space-y-0.5">
+                {pieData.map((item, index) => (
+                   <div key={index} className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1">
+                         <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+                         <span className="text-slate-500">{item.name}</span>
+                      </div>
+                      <span className="font-bold text-slate-700">{item.value}</span>
+                   </div>
+                ))}
+             </div>
            </div>
         </div>
       </div>
