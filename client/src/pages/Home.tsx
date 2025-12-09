@@ -102,7 +102,7 @@ export default function Home() {
     }
 
     return {
-      name: zone.name.replace('Nilakkal Parking Zone ', 'PZ'),
+      name: zone.name.replace('Nilakkal Parking Zone ', 'P'),
       Heavy: heavyPct,
       Medium: mediumPct,
       Light: lightPct,
@@ -230,7 +230,7 @@ export default function Home() {
              <div className="flex justify-between items-center border-b border-slate-50 pb-1 mb-1">
                <span className="font-medium text-slate-500 text-xs">Composition</span>
                <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
-                 {hoveredZone ? `PZ${hoveredZone.name.replace('Nilakkal Parking Zone ', '')}` : "Total"}
+                 {hoveredZone ? `P${hoveredZone.name.replace('Nilakkal Parking Zone ', '')}` : "Total"}
                </span>
              </div>
              
