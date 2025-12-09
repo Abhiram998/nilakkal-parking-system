@@ -173,7 +173,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-4">
            {/* Logo - Added here */}
-           <img src={logo} alt="Kerala Police Logo" className="h-10 w-auto object-contain" />
+           <img src={logo} alt="Kerala Police Logo" className="h-20 w-auto object-contain" />
 
            {/* Mobile Menu Trigger is handled in Layout */}
            <Button variant="ghost" size="icon" className="md:hidden">
