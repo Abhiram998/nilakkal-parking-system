@@ -54,7 +54,7 @@ export function ZoneCard({ zone, detailed = false }: { zone: ParkingZone, detail
             {zone.id}
           </div>
           <div>
-            <h3 className="font-bold text-xs text-foreground leading-none whitespace-nowrap">{zone.name.replace('Nilakkal Zone ', 'Z')}</h3>
+            <h3 className="font-bold text-xs text-foreground leading-none whitespace-nowrap">{zone.name.replace('Nilakkal Parking Zone ', 'Parking Zone ')}</h3>
           </div>
         </div>
         

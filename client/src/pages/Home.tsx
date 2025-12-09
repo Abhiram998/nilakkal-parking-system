@@ -102,7 +102,7 @@ export default function Home() {
     }
 
     return {
-      name: zone.name.replace('Nilakkal Zone ', 'Z'),
+      name: zone.name.replace('Nilakkal Parking Zone ', 'PZ'),
       Heavy: heavyPct,
       Medium: mediumPct,
       Light: lightPct,
@@ -169,7 +169,7 @@ export default function Home() {
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Dashboard Parking</h1>
+          <h1 className="text-xl font-bold text-slate-800">Dashboard Parking Zone</h1>
         </div>
         <div className="flex items-center gap-4">
            {/* Logo - Added here */}
@@ -230,7 +230,7 @@ export default function Home() {
              <div className="flex justify-between items-center border-b border-slate-50 pb-1 mb-1">
                <span className="font-medium text-slate-500 text-xs">Composition</span>
                <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
-                 {hoveredZone ? `Z${hoveredZone.name.replace('Nilakkal Zone ', '')}` : "Total"}
+                 {hoveredZone ? `PZ${hoveredZone.name.replace('Nilakkal Parking Zone ', '')}` : "Total"}
                </span>
              </div>
              
@@ -258,7 +258,7 @@ export default function Home() {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
-                <h3 className="font-bold text-slate-700">Live Zone Status (Occupancy %)</h3>
+                <h3 className="font-bold text-slate-700">Live Parking Zone Status (Occupancy %)</h3>
                 {isAdmin && (
                   <Button size="sm" onClick={() => setIsTicketOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
                     <Ticket className="w-4 h-4" /> Generate Ticket
@@ -396,7 +396,7 @@ export default function Home() {
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                    <Activity className="w-5 h-5 text-orange-500" />
-                   <h3 className="font-bold text-slate-700">Live Zone Overview</h3>
+                   <h3 className="font-bold text-slate-700">Live Parking Zone Overview</h3>
                 </div>
 
                 {/* Admin Search Widget (Integrated into Header) */}

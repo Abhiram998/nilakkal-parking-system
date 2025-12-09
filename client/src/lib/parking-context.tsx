@@ -76,7 +76,7 @@ const INITIAL_ZONES: ParkingZone[] = Array.from({ length: ZONES_COUNT }, (_, i) 
 
   return {
     id: `Z${i + 1}`,
-    name: `Nilakkal Zone ${i + 1}`,
+    name: `Nilakkal Parking Zone ${i + 1}`,
     capacity: ZONE_CAPACITY,
     occupied: occupiedCount,
     vehicles,
