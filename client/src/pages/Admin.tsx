@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { User, Eye, Bus, Truck, Car, ChevronLeft, ChevronRight, Pause, Play, Plus, Pencil, Trash2, FileText, Download } from "lucide-react";
+import { User, Eye, Bus, Truck, Car, ChevronLeft, ChevronRight, Pause, Play, Plus, Pencil, Trash2, FileText, Download, Search } from "lucide-react";
 
 export default function Admin() {
   const { zones, totalCapacity, totalOccupied, addZone, updateZone, deleteZone } = useParking();
@@ -28,8 +28,39 @@ export default function Admin() {
     limits: { heavy: 10, medium: 15, light: 25 }
   });
   
+  // Search State
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResult, setSearchResult] = useState<{ vehicle: any; zoneName: string } | null>(null);
+
   // Slideshow state
   const [pageIndex, setPageIndex] = useState(0);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResult(null);
+      return;
+    }
+
+    // Search across all zones
+    for (const zone of zones) {
+      const found = zone.vehicles.find(v => v.number.toLowerCase().includes(query.toLowerCase()));
+      if (found) {
+        setSearchResult({ vehicle: found, zoneName: zone.name });
+        return;
+      }
+    }
+    setSearchResult(null);
+  };
+
+  const openSearchDialog = () => {
+    setSearchQuery("");
+    setSearchResult(null);
+    setIsSearchOpen(true);
+    setIsPaused(true);
+  };
+
   const [isPaused, setIsPaused] = useState(false);
   const ITEMS_PER_PAGE = 5;
   const totalPages = Math.ceil(zones.length / ITEMS_PER_PAGE) || 1;
@@ -136,6 +167,9 @@ export default function Admin() {
           <div className="text-xs text-white/60">CONTROL ROOM • {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}</div>
         </div>
         <div className="flex gap-4 items-center">
+          <Button onClick={openSearchDialog} className="bg-white text-black hover:bg-white/90 rounded-none gap-2">
+            <Search className="w-4 h-4" /> Find Vehicle
+          </Button>
           <Button onClick={openCreateDialog} className="bg-white text-black hover:bg-white/90 rounded-none gap-2">
             <Plus className="w-4 h-4" /> Add Parking
           </Button>
@@ -314,6 +348,92 @@ export default function Admin() {
                  </table>
                </div>
              )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Find Vehicle Dialog */}
+      <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+        <DialogContent className="bg-black border border-white text-white">
+          <DialogHeader>
+            <DialogTitle>Find Vehicle</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="vehicle-search">Vehicle Number</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="vehicle-search"
+                  placeholder="Enter vehicle number..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="bg-black border-white text-white"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {searchQuery && (
+              <div className="mt-4 border border-white/20 p-4 min-h-[150px] flex items-center justify-center">
+                {searchResult ? (
+                  <div className="w-full space-y-4">
+                    <div className="flex items-center justify-between border-b border-white/20 pb-2">
+                      <span className="text-white/70 uppercase text-xs tracking-wider">Status</span>
+                      <span className="text-green-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        Parked
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-[10px] uppercase text-white/50 mb-1">Vehicle Number</div>
+                        <div className="font-mono text-xl font-bold">{searchResult.vehicle.number}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] uppercase text-white/50 mb-1">Type</div>
+                        <div className="font-bold flex items-center justify-end gap-2 uppercase">
+                          {getVehicleIcon(searchResult.vehicle.type)}
+                          {searchResult.vehicle.type}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div className="text-[10px] uppercase text-white/50 mb-1">Parking Zone</div>
+                        <div className="font-bold text-lg">{searchResult.zoneName}</div>
+                      </div>
+                      
+                      <div className="text-right">
+                         <div className="text-[10px] uppercase text-white/50 mb-1">Slot Number</div>
+                         <div className="font-mono text-lg">{searchResult.vehicle.slot || "N/A"}</div>
+                      </div>
+
+                      <div className="col-span-2 bg-white/5 p-3 mt-2 border border-white/10">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="text-[10px] uppercase text-white/50 mb-1">Time In</div>
+                            <div className="font-mono">
+                              {new Date(searchResult.vehicle.entryTime).toLocaleTimeString()}
+                            </div>
+                            <div className="text-xs text-white/50">
+                              {new Date(searchResult.vehicle.entryTime).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[10px] uppercase text-white/50 mb-1">Duration</div>
+                            <div className="font-mono text-yellow-500">
+                              {Math.floor((new Date().getTime() - new Date(searchResult.vehicle.entryTime).getTime()) / (1000 * 60))} mins
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                   <div className="text-white/50 italic">No vehicle found with number "{searchQuery}"</div>
+                )}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
