@@ -289,113 +289,115 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={barChartData} 
-                  barSize={24} // Smaller bars since there are 3 per zone
-                  margin={{ top: 20, right: 10, left: 0, bottom: 5 }}
-                  onMouseMove={(state: any) => {
-                    if (state.activePayload) {
-                      setHoveredZone(state.activePayload[0].payload.originalZone);
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    setHoveredZone(null);
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#64748b', fontSize: 13, fontWeight: 500}} 
-                    dy={10} 
-                    interval={0} // Show all zones
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#64748b', fontSize: 12}} 
-                    unit="%"
-                    domain={[0, 100]} // Fixed scale 0-100%
-                    allowDataOverflow={true}
-                  />
-                  <Tooltip 
-                    cursor={{ fill: '#f8fafc' }}
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        const originalZone = data.originalZone;
-                        
-                        return (
-                          <div className="bg-white p-3 border border-slate-100 shadow-xl rounded-lg text-sm">
-                            <p className="font-bold text-slate-800 mb-2">{label}</p>
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between gap-4 text-xs">
-                                <span className="flex items-center gap-1.5 text-slate-500">
-                                  <div className="w-2 h-2 rounded-full bg-[#1e293b]"></div>
-                                  Heavy
-                                </span>
-                                <span className="font-mono font-medium">
-                                  {originalZone.stats.heavy} / {originalZone.limits?.heavy || '-'} ({data.Heavy.toFixed(1)}%{data.Heavy > 100 ? " — OVER 100%" : ""})
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between gap-4 text-xs">
-                                <span className="flex items-center gap-1.5 text-slate-500">
-                                  <div className="w-2 h-2 rounded-full bg-[#f59e0b]"></div>
-                                  Medium
-                                </span>
-                                <span className="font-mono font-medium">
-                                  {originalZone.stats.medium} / {originalZone.limits?.medium || '-'} ({data.Medium.toFixed(1)}%{data.Medium > 100 ? " — OVER 100%" : ""})
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between gap-4 text-xs">
-                                <span className="flex items-center gap-1.5 text-slate-500">
-                                  <div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>
-                                  Light
-                                </span>
-                                <span className="font-mono font-medium">
-                                  {originalZone.stats.light} / {originalZone.limits?.light || '-'} ({data.Light.toFixed(1)}%{data.Light > 100 ? " — OVER 100%" : ""})
-                                </span>
+            <div className="w-full overflow-x-auto">
+              <div className="h-[300px] min-w-[1000px] md:min-w-0 md:w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={barChartData} 
+                    barSize={24} // Smaller bars since there are 3 per zone
+                    margin={{ top: 20, right: 10, left: 0, bottom: 5 }}
+                    onMouseMove={(state: any) => {
+                      if (state.activePayload) {
+                        setHoveredZone(state.activePayload[0].payload.originalZone);
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredZone(null);
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: '#64748b', fontSize: 13, fontWeight: 500}} 
+                      dy={10} 
+                      interval={0} // Show all zones
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: '#64748b', fontSize: 12}} 
+                      unit="%"
+                      domain={[0, 100]} // Fixed scale 0-100%
+                      allowDataOverflow={true}
+                    />
+                    <Tooltip 
+                      cursor={{ fill: '#f8fafc' }}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          const originalZone = data.originalZone;
+                          
+                          return (
+                            <div className="bg-white p-3 border border-slate-100 shadow-xl rounded-lg text-sm">
+                              <p className="font-bold text-slate-800 mb-2">{label}</p>
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between gap-4 text-xs">
+                                  <span className="flex items-center gap-1.5 text-slate-500">
+                                    <div className="w-2 h-2 rounded-full bg-[#1e293b]"></div>
+                                    Heavy
+                                  </span>
+                                  <span className="font-mono font-medium">
+                                    {originalZone.stats.heavy} / {originalZone.limits?.heavy || '-'} ({data.Heavy.toFixed(1)}%{data.Heavy > 100 ? " — OVER 100%" : ""})
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between gap-4 text-xs">
+                                  <span className="flex items-center gap-1.5 text-slate-500">
+                                    <div className="w-2 h-2 rounded-full bg-[#f59e0b]"></div>
+                                    Medium
+                                  </span>
+                                  <span className="font-mono font-medium">
+                                    {originalZone.stats.medium} / {originalZone.limits?.medium || '-'} ({data.Medium.toFixed(1)}%{data.Medium > 100 ? " — OVER 100%" : ""})
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between gap-4 text-xs">
+                                  <span className="flex items-center gap-1.5 text-slate-500">
+                                    <div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>
+                                    Light
+                                  </span>
+                                  <span className="font-mono font-medium">
+                                    {originalZone.stats.light} / {originalZone.limits?.light || '-'} ({data.Light.toFixed(1)}%{data.Light > 100 ? " — OVER 100%" : ""})
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  {/* Unstacked bars (side by side) */}
-                  <Bar dataKey="Heavy" fill="#1e293b" radius={[4, 4, 0, 0]} name="Heavy">
-                    <LabelList 
-                        dataKey="Heavy" 
-                        position="center" 
-                        angle={-90}
-                        formatter={(value: number) => value > 0 ? `${Math.round(value)}%` : ''}
-                        style={{ fill: '#ffffff', fontSize: 10, fontWeight: 'bold' }} 
+                          );
+                        }
+                        return null;
+                      }}
                     />
-                  </Bar>
-                  <Bar dataKey="Medium" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Medium">
-                    <LabelList 
-                        dataKey="Medium" 
-                        position="center" 
-                        angle={-90}
-                        formatter={(value: number) => value > 0 ? `${Math.round(value)}%` : ''}
-                        style={{ fill: '#ffffff', fontSize: 10, fontWeight: 'bold' }} 
-                    />
-                  </Bar>
-                  <Bar dataKey="Light" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Light">
-                    <LabelList 
-                        dataKey="Light" 
-                        position="center" 
-                        angle={-90}
-                        formatter={(value: number) => value > 0 ? `${Math.round(value)}%` : ''}
-                        style={{ fill: '#ffffff', fontSize: 10, fontWeight: 'bold' }} 
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                    {/* Unstacked bars (side by side) */}
+                    <Bar dataKey="Heavy" fill="#1e293b" radius={[4, 4, 0, 0]} name="Heavy">
+                      <LabelList 
+                          dataKey="Heavy" 
+                          position="center" 
+                          angle={-90}
+                          formatter={(value: number) => value > 0 ? `${Math.round(value)}%` : ''}
+                          style={{ fill: '#ffffff', fontSize: 10, fontWeight: 'bold' }} 
+                      />
+                    </Bar>
+                    <Bar dataKey="Medium" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Medium">
+                      <LabelList 
+                          dataKey="Medium" 
+                          position="center" 
+                          angle={-90}
+                          formatter={(value: number) => value > 0 ? `${Math.round(value)}%` : ''}
+                          style={{ fill: '#ffffff', fontSize: 10, fontWeight: 'bold' }} 
+                      />
+                    </Bar>
+                    <Bar dataKey="Light" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Light">
+                      <LabelList 
+                          dataKey="Light" 
+                          position="center" 
+                          angle={-90}
+                          formatter={(value: number) => value > 0 ? `${Math.round(value)}%` : ''}
+                          style={{ fill: '#ffffff', fontSize: 10, fontWeight: 'bold' }} 
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
