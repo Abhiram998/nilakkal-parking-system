@@ -72,7 +72,17 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
 
   const addZone = async (zoneData: any) => {
     try {
-      await api.createZone(zoneData);
+      // Generate a unique zone ID
+      const zoneCount = zones.length + 1;
+      const formattedData = {
+        id: `Z${zoneCount}`,
+        name: zoneData.name,
+        capacity: zoneData.capacity,
+        heavyLimit: zoneData.limits?.heavy || Math.floor(zoneData.capacity * 0.2),
+        mediumLimit: zoneData.limits?.medium || Math.floor(zoneData.capacity * 0.3),
+        lightLimit: zoneData.limits?.light || (zoneData.capacity - Math.floor(zoneData.capacity * 0.2) - Math.floor(zoneData.capacity * 0.3)),
+      };
+      await api.createZone(formattedData);
       await refreshZones();
     } catch (error) {
       console.error('Failed to add zone:', error);
@@ -81,7 +91,16 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
 
   const updateZone = async (id: string, data: any) => {
     try {
-      await api.updateZone(id, data);
+      // Format data to match backend schema
+      const formattedData: any = {};
+      if (data.name) formattedData.name = data.name;
+      if (data.capacity) formattedData.capacity = data.capacity;
+      if (data.limits) {
+        formattedData.heavyLimit = data.limits.heavy;
+        formattedData.mediumLimit = data.limits.medium;
+        formattedData.lightLimit = data.limits.light;
+      }
+      await api.updateZone(id, formattedData);
       await refreshZones();
     } catch (error) {
       console.error('Failed to update zone:', error);

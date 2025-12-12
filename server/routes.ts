@@ -115,11 +115,13 @@ export async function registerRoutes(
   // Create new zone
   app.post("/api/zones", async (req, res) => {
     try {
+      console.log("Creating zone with data:", req.body);
       const validatedData = insertParkingZoneSchema.parse(req.body);
       const zone = await storage.createZone(validatedData);
       res.json({ success: true, zone });
     } catch (error) {
-      res.status(400).json({ success: false, message: "Failed to create zone" });
+      console.error("Failed to create zone:", error);
+      res.status(400).json({ success: false, message: "Failed to create zone", error: String(error) });
     }
   });
 
