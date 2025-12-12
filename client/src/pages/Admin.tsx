@@ -112,8 +112,9 @@ export default function Admin() {
   };
 
   const openCreateDialog = () => {
+    const nextZoneNum = zones.length + 1;
     setFormData({ 
-      name: "New Zone", 
+      name: `P${nextZoneNum}`, 
       capacity: 50,
       limits: { heavy: 10, medium: 15, light: 25 }
     });
