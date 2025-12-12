@@ -27,9 +27,12 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
   const refreshZones = async () => {
     try {
       const data = await api.getZones();
-      setZones(data);
+      // Ensure we always set an array
+      setZones(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch zones:', error);
+      // Keep zones as empty array on error
+      setZones([]);
     } finally {
       setLoading(false);
     }

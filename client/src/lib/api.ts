@@ -47,7 +47,12 @@ export const api = {
   // Zones
   async getZones(): Promise<ParkingZone[]> {
     const res = await fetch('/api/zones');
-    return res.json();
+    if (!res.ok) {
+      throw new Error('Failed to fetch zones');
+    }
+    const data = await res.json();
+    // Ensure we always return an array
+    return Array.isArray(data) ? data : [];
   },
 
   async createZone(zone: { id: string; name: string; capacity: number; heavyLimit: number; mediumLimit: number; lightLimit: number }) {
