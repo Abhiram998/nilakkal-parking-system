@@ -1,28 +1,50 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useParking } from "@/lib/parking-context";
-import { Shield, Lock, ShieldAlert } from "lucide-react";
+import { Shield, Lock, ShieldAlert, User, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminLogin() {
   const [, setLocation] = useLocation();
-  const { loginAdmin } = useParking();
+  const { loginAdmin, registerAdmin } = useParking();
+  const { toast } = useToast();
 
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [policeId, setPoliceId] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
-    if (loginAdmin(email, password)) {
-      setLocation("/admin");
+    if (isLogin) {
+      if (loginAdmin(email, password)) {
+        setLocation("/admin");
+      } else {
+        setError("Invalid ID or Password. Access Denied.");
+      }
     } else {
-      setError("Invalid ID or Password. Access Denied.");
+      if (registerAdmin(email, password, name, policeId)) {
+        toast({
+          title: "Officer Registered",
+          description: "Registration successful. Please login.",
+        });
+        setIsLogin(true);
+        // Clear form
+        setEmail("");
+        setPassword("");
+        setName("");
+        setPoliceId("");
+      } else {
+        setError("Officer with this email already exists.");
+      }
     }
   };
 
@@ -33,17 +55,55 @@ export default function AdminLogin() {
           <div className="mx-auto w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-4 text-blue-500 border border-blue-500/20">
             <Shield className="w-8 h-8" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Police Control</CardTitle>
-          <CardDescription className="text-slate-400">Restricted Access. Authorized Personnel Only.</CardDescription>
+          <CardTitle className="text-2xl font-bold tracking-tight">
+            {isLogin ? "Police Control" : "Officer Registration"}
+          </CardTitle>
+          <CardDescription className="text-slate-400">
+            {isLogin ? "Restricted Access. Authorized Personnel Only." : "Create new officer credentials."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {!isLogin && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-slate-200">Officer Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                    <Input 
+                      id="name" 
+                      placeholder="Officer Name" 
+                      className="pl-9 bg-slate-950 border-slate-800 text-slate-50 placeholder:text-slate-600 focus-visible:ring-blue-500" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="police-id" className="text-slate-200">Police ID</Label>
+                  <div className="relative">
+                    <Shield className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                    <Input 
+                      id="police-id" 
+                      placeholder="POL-ID-123" 
+                      className="pl-9 bg-slate-950 border-slate-800 text-slate-50 placeholder:text-slate-600 focus-visible:ring-blue-500" 
+                      value={policeId}
+                      onChange={(e) => setPoliceId(e.target.value)}
+                      required 
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="admin-id" className="text-slate-200">Officer Email</Label>
               <div className="relative">
                 <ShieldAlert className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                 <Input 
                   id="admin-id" 
+                  type="email"
                   placeholder="police@gmail.com" 
                   className="pl-9 bg-slate-950 border-slate-800 text-slate-50 placeholder:text-slate-600 focus-visible:ring-blue-500" 
                   value={email}
@@ -75,10 +135,31 @@ export default function AdminLogin() {
             )}
 
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-              Authenticate
+              {isLogin ? "Authenticate" : "Register Officer"}
             </Button>
           </form>
-          <div className="mt-6 text-center">
+          
+          <div className="mt-6 flex flex-col items-center gap-4">
+             <div 
+               className="text-sm text-blue-400 hover:text-blue-300 cursor-pointer transition-colors flex items-center gap-2"
+               onClick={() => {
+                 setIsLogin(!isLogin);
+                 setError("");
+               }}
+             >
+               {isLogin ? (
+                 <>
+                   <UserPlus className="w-4 h-4" />
+                   Register New Officer
+                 </>
+               ) : (
+                 <>
+                   <Shield className="w-4 h-4" />
+                   Back to Login
+                 </>
+               )}
+             </div>
+
             <Link href="/">
               <span className="text-sm text-slate-500 hover:text-slate-300 cursor-pointer transition-colors">
                 ← Return to Public Portal

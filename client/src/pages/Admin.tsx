@@ -134,7 +134,7 @@ export default function Admin() {
       {/* Header */}
       <div className="mb-4 border-b border-white/20 pb-2 flex justify-between items-end">
         <div>
-          <h1 className="text-xl font-bold uppercase tracking-wider mb-1">Nilakkal Parking – Live Admin Dashboard</h1>
+          <h1 className="text-xl font-bold uppercase tracking-wider mb-1">Nilakkal Parking – Admin Dashboard</h1>
           <div className="text-xs text-white/60">CONTROL ROOM • {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}</div>
         </div>
         <div className="flex gap-4 items-center">
