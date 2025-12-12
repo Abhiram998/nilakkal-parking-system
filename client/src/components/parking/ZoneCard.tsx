@@ -46,15 +46,12 @@ export function ZoneCard({ zone, detailed = false }: { zone: ParkingZone, detail
       <div className="flex justify-between items-center mb-1">
         <div className="flex items-center gap-1.5">
           <div className={cn(
-            "h-5 w-5 rounded-md flex items-center justify-center text-[10px] font-bold border",
+            "h-6 w-8 rounded-md flex items-center justify-center text-xs font-bold border",
             isFull 
               ? "bg-destructive text-destructive-foreground border-destructive/20" 
               : "bg-primary/10 text-primary border-primary/10"
           )}>
-            {zone.id}
-          </div>
-          <div>
-            <h3 className="font-bold text-xs text-foreground leading-none whitespace-nowrap">{zone.name.replace('Nilakkal Parking Zone ', 'Parking Zone ')}</h3>
+            P{zone.id.replace('Z', '')}
           </div>
         </div>
         
@@ -109,7 +106,7 @@ export function ZoneCard({ zone, detailed = false }: { zone: ParkingZone, detail
                         </div>
                      </div>
                      <div className="text-xs font-mono text-muted-foreground">
-                        {v.entryTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        {new Date(v.entryTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                      </div>
                    </div>
                  ))}
