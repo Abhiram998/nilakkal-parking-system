@@ -102,7 +102,7 @@ export default function Home() {
     }
 
     return {
-      name: zone.name.replace('Nilakkal Parking Zone ', 'P'),
+      name: zone.name.replace('Parking Zone ', 'P').replace('Nilakkal Parking Zone ', 'P'),
       Heavy: heavyPct,
       Medium: mediumPct,
       Light: lightPct,
