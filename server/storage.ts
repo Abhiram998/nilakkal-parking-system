@@ -7,13 +7,19 @@ import {
   type InsertParkingZone,
   type Vehicle,
   type InsertVehicle,
+  type ParkingEvent,
+  type InsertParkingEvent,
+  type DailySnapshot,
+  type InsertDailySnapshot,
   users,
   admins,
   parkingZones,
   vehicles,
+  parkingEvents,
+  dailySnapshots,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, gte, desc } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -37,6 +43,16 @@ export interface IStorage {
   getVehicleByNumber(number: string): Promise<Vehicle | undefined>;
   createVehicle(vehicle: InsertVehicle): Promise<Vehicle>;
   deleteVehicle(id: string): Promise<void>;
+  getVehicleById(id: string): Promise<Vehicle | undefined>;
+  
+  // Event tracking methods
+  createParkingEvent(event: InsertParkingEvent): Promise<ParkingEvent>;
+  getRecentEvents(days: number): Promise<ParkingEvent[]>;
+  getEventsByDayOfWeek(dayOfWeek: number): Promise<ParkingEvent[]>;
+  
+  // Analytics methods
+  getDailySnapshots(days: number): Promise<DailySnapshot[]>;
+  upsertDailySnapshot(snapshot: InsertDailySnapshot): Promise<DailySnapshot>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -115,6 +131,59 @@ export class DatabaseStorage implements IStorage {
 
   async deleteVehicle(id: string): Promise<void> {
     await db.delete(vehicles).where(eq(vehicles.id, id));
+  }
+
+  async getVehicleById(id: string): Promise<Vehicle | undefined> {
+    const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, id));
+    return vehicle || undefined;
+  }
+
+  // Event tracking methods
+  async createParkingEvent(event: InsertParkingEvent): Promise<ParkingEvent> {
+    const [newEvent] = await db.insert(parkingEvents).values(event).returning();
+    return newEvent;
+  }
+
+  async getRecentEvents(days: number): Promise<ParkingEvent[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    return await db.select().from(parkingEvents)
+      .where(gte(parkingEvents.eventTime, cutoffDate))
+      .orderBy(desc(parkingEvents.eventTime));
+  }
+
+  async getEventsByDayOfWeek(dayOfWeek: number): Promise<ParkingEvent[]> {
+    return await db.select().from(parkingEvents)
+      .where(eq(parkingEvents.dayOfWeek, dayOfWeek));
+  }
+
+  // Analytics methods
+  async getDailySnapshots(days: number): Promise<DailySnapshot[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffStr = cutoffDate.toISOString().split('T')[0];
+    return await db.select().from(dailySnapshots)
+      .where(gte(dailySnapshots.date, cutoffStr))
+      .orderBy(desc(dailySnapshots.date));
+  }
+
+  async upsertDailySnapshot(snapshot: InsertDailySnapshot): Promise<DailySnapshot> {
+    const [existing] = await db.select().from(dailySnapshots)
+      .where(and(
+        eq(dailySnapshots.zoneId, snapshot.zoneId),
+        eq(dailySnapshots.date, snapshot.date)
+      ));
+    
+    if (existing) {
+      const [updated] = await db.update(dailySnapshots)
+        .set(snapshot)
+        .where(eq(dailySnapshots.id, existing.id))
+        .returning();
+      return updated;
+    }
+    
+    const [newSnapshot] = await db.insert(dailySnapshots).values(snapshot).returning();
+    return newSnapshot;
   }
 }
 
