@@ -81,7 +81,11 @@ export default function Home() {
   };
 
   // Chart Data Preparation
-  const barChartData = zones.map(zone => {
+  // Map full zone names to short labels P1, P2, P3...
+  const fullZoneNames = zones.map(z => z.name);
+  const shortLabels = fullZoneNames.map((_, i) => `P${i + 1}`);
+  
+  const barChartData = zones.map((zone, index) => {
     // Calculate percentages for each vehicle type based on specific limits if available, or total capacity
     // If limits are available: Pct = (current / limit) * 100
     // If only total capacity: Pct = (current / total) * 100 (This was the old behavior)
@@ -102,7 +106,8 @@ export default function Home() {
     }
 
     return {
-      name: zone.name.replace('Parking Zone ', 'P').replace('Nilakkal Parking Zone ', 'P'),
+      name: shortLabels[index], // Short label for X-axis (P1, P2, P3...)
+      fullName: zone.name, // Full zone name for tooltip
       Heavy: heavyPct,
       Medium: mediumPct,
       Light: lightPct,
@@ -324,14 +329,14 @@ export default function Home() {
                     />
                     <Tooltip 
                       cursor={{ fill: '#f8fafc' }}
-                      content={({ active, payload, label }) => {
+                      content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
                           const originalZone = data.originalZone;
                           
                           return (
                             <div className="bg-white p-3 border border-slate-100 shadow-xl rounded-lg text-sm">
-                              <p className="font-bold text-slate-800 mb-2">{label}</p>
+                              <p className="font-bold text-slate-800 mb-2">{data.fullName}</p>
                               <div className="space-y-1">
                                 <div className="flex items-center justify-between gap-4 text-xs">
                                   <span className="flex items-center gap-1.5 text-slate-500">
