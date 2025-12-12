@@ -303,78 +303,159 @@ export async function registerRoutes(
   // Analytics endpoints
   app.get("/api/analytics/summary", async (req, res) => {
     try {
-      const events = await storage.getRecentEvents(30); // Last 30 days
+      const events = await storage.getRecentEvents(30);
       const zones = await storage.getAllZones();
       const allVehicles = await storage.getAllVehicles();
       
-      // Calculate daily trends
-      const dailyData: Record<string, { entries: number; occupancy: number }> = {};
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      
-      dayNames.forEach((day, i) => {
-        const dayEvents = events.filter(e => e.dayOfWeek === i && e.eventType === 'entry');
-        dailyData[day] = {
-          entries: dayEvents.length,
-          occupancy: 0,
-        };
-      });
-
-      // Calculate current total capacity and occupancy
       const totalCapacity = zones.reduce((sum, z) => sum + z.capacity, 0);
       const totalOccupied = allVehicles.length;
       const currentOccupancyPercent = totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0;
 
-      // Weekly trend based on actual data
-      const weeklyTrend = dayNames.map((day, i) => {
-        const dayEntries = events.filter(e => e.dayOfWeek === i && e.eventType === 'entry').length;
-        // Estimate occupancy based on entries (higher entries = higher likely occupancy)
-        const maxDayEntries = Math.max(...dayNames.map((_, idx) => 
-          events.filter(e => e.dayOfWeek === idx && e.eventType === 'entry').length
-        ), 1);
-        const estimatedOccupancy = maxDayEntries > 0 ? Math.round((dayEntries / maxDayEntries) * 100) : 50;
-        return { day, occupancy: Math.min(estimatedOccupancy, 100) || 50 };
+      // Default trends when no historical data
+      const defaultWeeklyTrend = [
+        { day: 'Sun', occupancy: 75 }, { day: 'Mon', occupancy: 45 },
+        { day: 'Tue', occupancy: 50 }, { day: 'Wed', occupancy: 55 },
+        { day: 'Thu', occupancy: 60 }, { day: 'Fri', occupancy: 70 },
+        { day: 'Sat', occupancy: 85 },
+      ];
+      const defaultHourlyProbs = { 4: 30, 8: 50, 12: 80, 16: 70, 20: 50, 0: 20 };
+
+      // Helper: get date string from event
+      const getDateStr = (e: { eventTime: Date }) => {
+        const d = new Date(e.eventTime);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      };
+
+      // Step 1: Group events by zone + calendar date
+      type DailyStats = { peak: number; hourly: Record<number, number> };
+      const zoneDateStats = new Map<string, Map<string, DailyStats>>();
+      
+      zones.forEach(zone => {
+        const dateMap = new Map<string, DailyStats>();
+        const zoneEvents = events.filter(e => e.zoneId === zone.id);
+        
+        // Get unique dates for this zone
+        const dates = Array.from(new Set(zoneEvents.map(e => getDateStr(e))));
+        
+        dates.forEach(dateStr => {
+          const dayEvents = zoneEvents.filter(e => getDateStr(e) === dateStr)
+            .sort((a, b) => a.hourOfDay - b.hourOfDay);
+          
+          // Compute per-day cumulative occupancy
+          let balance = 0;
+          let peak = 0;
+          const hourly: Record<number, number> = {};
+          
+          for (let h = 0; h < 24; h++) {
+            const entries = dayEvents.filter(e => e.hourOfDay === h && e.eventType === 'entry').length;
+            const exits = dayEvents.filter(e => e.hourOfDay === h && e.eventType === 'exit').length;
+            balance = Math.max(0, Math.min(balance + entries - exits, zone.capacity));
+            hourly[h] = balance;
+            peak = Math.max(peak, balance);
+          }
+          
+          dateMap.set(dateStr, { 
+            peak: zone.capacity > 0 ? Math.round((peak / zone.capacity) * 100) : 0,
+            hourly 
+          });
+        });
+        
+        zoneDateStats.set(zone.id, dateMap);
       });
 
-      // Hourly breakdown for tomorrow prediction
-      const tomorrowDayOfWeek = (new Date().getDay() + 1) % 7;
-      const tomorrowEvents = events.filter(e => e.dayOfWeek === tomorrowDayOfWeek);
+      // Step 2: Aggregate by day-of-week (average daily peaks)
+      let weeklyTrend = defaultWeeklyTrend;
       
-      const hourlyData: Record<number, number> = {};
-      for (let h = 0; h < 24; h++) {
-        hourlyData[h] = tomorrowEvents.filter(e => e.hourOfDay === h && e.eventType === 'entry').length;
+      if (events.length > 0 && zones.length > 0) {
+        weeklyTrend = dayNames.map((day, dayIdx) => {
+          const peaksForDay: number[] = [];
+          
+          zones.forEach(zone => {
+            const dateMap = zoneDateStats.get(zone.id);
+            if (!dateMap) return;
+            
+            dateMap.forEach((stats, dateStr) => {
+              const d = new Date(dateStr);
+              if (d.getDay() === dayIdx) {
+                peaksForDay.push(stats.peak);
+              }
+            });
+          });
+          
+          const avgPeak = peaksForDay.length > 0
+            ? Math.round(peaksForDay.reduce((a, b) => a + b, 0) / peaksForDay.length)
+            : defaultWeeklyTrend[dayIdx].occupancy;
+          
+          return { day, occupancy: avgPeak };
+        });
       }
-      
-      const maxHourlyEntries = Math.max(...Object.values(hourlyData), 1);
-      const tomorrowHourly = [
-        { time: '4am', prob: Math.round((hourlyData[4] || 0) / maxHourlyEntries * 100) || 30 },
-        { time: '8am', prob: Math.round((hourlyData[8] || 0) / maxHourlyEntries * 100) || 50 },
-        { time: '12pm', prob: Math.round((hourlyData[12] || 0) / maxHourlyEntries * 100) || 80 },
-        { time: '4pm', prob: Math.round((hourlyData[16] || 0) / maxHourlyEntries * 100) || 70 },
-        { time: '8pm', prob: Math.round((hourlyData[20] || 0) / maxHourlyEntries * 100) || 50 },
-        { time: '12am', prob: Math.round((hourlyData[0] || 0) / maxHourlyEntries * 100) || 20 },
-      ];
 
-      // Zone predictions based on historical data
+      // Step 3: Hourly forecast for tomorrow (average hourly curves for that weekday)
+      const tomorrowDayOfWeek = (new Date().getDay() + 1) % 7;
+      const hourlyAverages: Record<number, number[]> = {};
+      for (let h = 0; h < 24; h++) hourlyAverages[h] = [];
+      
+      zones.forEach(zone => {
+        const dateMap = zoneDateStats.get(zone.id);
+        if (!dateMap) return;
+        
+        dateMap.forEach((stats, dateStr) => {
+          const d = new Date(dateStr);
+          if (d.getDay() === tomorrowDayOfWeek) {
+            for (let h = 0; h < 24; h++) {
+              const occPct = zone.capacity > 0 
+                ? Math.round((stats.hourly[h] / zone.capacity) * 100) 
+                : 0;
+              hourlyAverages[h].push(occPct);
+            }
+          }
+        });
+      });
+      
+      const timeLabels: Record<number, string> = { 4: '4am', 8: '8am', 12: '12pm', 16: '4pm', 20: '8pm', 0: '12am' };
+      const tomorrowHourly = [4, 8, 12, 16, 20, 0].map(h => {
+        const values = hourlyAverages[h];
+        const avgOcc = values.length > 0
+          ? Math.round(values.reduce((a, b) => a + b, 0) / values.length)
+          : defaultHourlyProbs[h as keyof typeof defaultHourlyProbs];
+        return { time: timeLabels[h], prob: avgOcc };
+      });
+
+      // Step 4: Zone predictions (blend live + historical average peak)
       const zonePredictions = zones.map(zone => {
-        const zoneEvents = events.filter(e => e.zoneId === zone.id && e.dayOfWeek === tomorrowDayOfWeek && e.eventType === 'entry');
-        const avgEntries = zoneEvents.length;
         const zoneVehicles = allVehicles.filter(v => v.zoneId === zone.id).length;
         const currentOcc = zone.capacity > 0 ? Math.round((zoneVehicles / zone.capacity) * 100) : 0;
         
-        // Predict based on current + historical pattern
-        const historyWeight = Math.min(avgEntries * 5, 30); // Cap historical influence
-        const predicted = Math.min(currentOcc + historyWeight + Math.floor(Math.random() * 10), 100);
+        const dateMap = zoneDateStats.get(zone.id);
+        const peaksForTomorrow: number[] = [];
         
-        return {
-          id: zone.id,
-          name: zone.name,
-          prob: predicted || Math.floor(Math.random() * 40) + 40,
-        };
+        if (dateMap) {
+          dateMap.forEach((stats, dateStr) => {
+            const d = new Date(dateStr);
+            if (d.getDay() === tomorrowDayOfWeek) {
+              peaksForTomorrow.push(stats.peak);
+            }
+          });
+        }
+        
+        const avgHistoricalPeak = peaksForTomorrow.length > 0
+          ? Math.round(peaksForTomorrow.reduce((a, b) => a + b, 0) / peaksForTomorrow.length)
+          : 0;
+        
+        // Blend: 50% current, 30% historical avg peak, 20% buffer (minimum 5%)
+        const hasHistory = peaksForTomorrow.length > 0;
+        const predicted = hasHistory
+          ? Math.min(Math.round(currentOcc * 0.5 + avgHistoricalPeak * 0.3 + 10), 100)
+          : Math.min(currentOcc + 15, 100);
+        
+        return { id: zone.id, name: zone.name, prob: Math.max(predicted, 5) };
       });
 
-      // Overall tomorrow probability
-      const avgZoneProb = zonePredictions.reduce((sum, z) => sum + z.prob, 0) / (zonePredictions.length || 1);
+      const avgZoneProb = zonePredictions.length > 0 
+        ? zonePredictions.reduce((sum, z) => sum + z.prob, 0) / zonePredictions.length : 50;
       const peakHourProb = Math.max(...tomorrowHourly.map(h => h.prob));
+      const peakHour = tomorrowHourly.find(h => h.prob === peakHourProb);
       
       res.json({
         success: true,
@@ -387,7 +468,7 @@ export async function registerRoutes(
           zonePredictions,
           tomorrowOverall: {
             probability: Math.round((avgZoneProb + peakHourProb) / 2),
-            peakTime: '12:00 PM',
+            peakTime: peakHour ? peakHour.time.replace('am', ':00 AM').replace('pm', ':00 PM') : '12:00 PM',
             confidence: events.length > 50 ? 'high' : events.length > 10 ? 'medium' : 'low',
           },
           dataPoints: events.length,

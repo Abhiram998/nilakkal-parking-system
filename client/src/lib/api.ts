@@ -101,4 +101,20 @@ export const api = {
     });
     return res.json();
   },
+
+  // Analytics
+  async getAnalyticsSummary() {
+    const res = await fetch('/api/analytics/summary');
+    if (!res.ok) {
+      throw new Error('Failed to fetch analytics');
+    }
+    return res.json();
+  },
+
+  async seedAnalyticsData() {
+    const res = await fetch('/api/analytics/seed', {
+      method: 'POST',
+    });
+    return res.json();
+  },
 };
