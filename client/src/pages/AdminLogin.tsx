@@ -15,11 +15,11 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
-    if (loginAdmin(email, password)) {
+    if (await loginAdmin(email, password)) {
       setLocation("/admin");
     } else {
       setError("Invalid ID or Password. Access Denied.");

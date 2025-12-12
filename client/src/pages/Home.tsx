@@ -47,7 +47,7 @@ export default function Home() {
     type: "light" as VehicleType
   });
 
-  const handleGenerateTicket = () => {
+  const handleGenerateTicket = async () => {
     if (!ticketData.vehicleNumber) {
       toast({
         variant: "destructive",
@@ -57,7 +57,7 @@ export default function Home() {
       return;
     }
 
-    const result = enterVehicle(
+    const result = await enterVehicle(
       ticketData.vehicleNumber, 
       ticketData.type, 
       ticketData.zoneId || undefined, 

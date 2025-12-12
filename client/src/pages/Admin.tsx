@@ -297,7 +297,7 @@ export default function Admin() {
                      </tr>
                    </thead>
                    <tbody>
-                     {selectedZone?.vehicles.map((v, i) => (
+                     {selectedZone?.vehicles.map((v: any, i: number) => (
                        <tr key={i} className="border-b border-white/20 hover:bg-white/5">
                          <td className="p-3">
                            <div className="flex items-center gap-2">
@@ -308,7 +308,7 @@ export default function Admin() {
                          <td className="p-3 font-mono font-bold">{v.number}</td>
                          <td className="p-3 font-mono text-sm opacity-70">{v.ticketId}</td>
                          <td className="p-3 font-mono text-sm text-right">
-                            {v.entryTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            {new Date(v.entryTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                          </td>
                        </tr>
                      ))}

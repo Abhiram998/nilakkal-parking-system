@@ -34,9 +34,9 @@ export default function AdminProfile() {
     setLocation("/");
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (registerAdmin(formData.email, formData.password, formData.name, formData.policeId)) {
+    if (await registerAdmin(formData.email, formData.password, formData.name, formData.policeId)) {
       toast({
         title: "Officer Registered",
         description: `${formData.name} has been added to the system.`,
