@@ -51,26 +51,6 @@ const ZONES_COUNT = 20;
 const ZONE_CAPACITY = 50;
 
 const INITIAL_ZONES: ParkingZone[] = Array.from({ length: ZONES_COUNT }, (_, i) => {
-  const occupiedCount = Math.floor(Math.random() * (ZONE_CAPACITY * 0.8));
-  const vehicles: Vehicle[] = [];
-  let heavy = 0, medium = 0, light = 0;
-
-  for(let j=0; j<occupiedCount; j++) {
-    const typeRand = Math.random();
-    const type: VehicleType = typeRand > 0.8 ? 'heavy' : typeRand > 0.5 ? 'medium' : 'light';
-    if(type === 'heavy') heavy++;
-    else if(type === 'medium') medium++;
-    else light++;
-
-    vehicles.push({
-      number: `KL-${Math.floor(Math.random()*99)}-${String.fromCharCode(65+Math.random()*26)}${String.fromCharCode(65+Math.random()*26)}-${Math.floor(1000+Math.random()*9000)}`,
-      entryTime: new Date(Date.now() - Math.floor(Math.random() * 10000000)),
-      zoneId: `Z${i + 1}`,
-      ticketId: `TKT-${Date.now()}-${j}`,
-      type
-    });
-  }
-
   // Distribute capacity roughly
   const heavyLimit = Math.floor(ZONE_CAPACITY * 0.2);
   const mediumLimit = Math.floor(ZONE_CAPACITY * 0.3);
@@ -78,12 +58,12 @@ const INITIAL_ZONES: ParkingZone[] = Array.from({ length: ZONES_COUNT }, (_, i) 
 
   return {
     id: `Z${i + 1}`,
-    name: `Nilakkal Parking Zone ${i + 1}`,
+    name: `Parking Zone ${i + 1}`,
     capacity: ZONE_CAPACITY,
-    occupied: occupiedCount,
-    vehicles,
+    occupied: 0,
+    vehicles: [],
     limits: { heavy: heavyLimit, medium: mediumLimit, light: lightLimit },
-    stats: { heavy, medium, light }
+    stats: { heavy: 0, medium: 0, light: 0 }
   };
 });
 
@@ -100,7 +80,8 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
     { username: "police@gmail.com", password: "575", name: "Sabarimala Traffic Control", policeId: "POL-KERALA-575" }
   ]);
 
-  // Persistence: Auto-restore on mount
+  // Persistence: Auto-restore on mount - DISABLED for design-only mode
+  /*
   useEffect(() => {
     const initPersistence = async () => {
       try {
@@ -130,8 +111,10 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
     };
     initPersistence();
   }, []);
+  */
 
   // Persistence: Periodic snapshots (every 3 mins)
+  /*
   useEffect(() => {
     const interval = setInterval(() => {
        const payload = makeSnapshotFromState(zonesRef.current);
@@ -140,6 +123,7 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
 
     return () => clearInterval(interval);
   }, []);
+  */
 
   // Persistence: Save on unload
   useEffect(() => {
@@ -208,7 +192,8 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
     setZones(zones.filter(z => z.id !== id));
   };
 
-  // Simulate live updates
+  // Simulate live updates - DISABLED
+  /*
   useEffect(() => {
     const interval = setInterval(() => {
       setZones(current => current.map(z => {
@@ -261,6 +246,7 @@ export function ParkingProvider({ children }: { children: React.ReactNode }) {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+  */
 
   const enterVehicle = (vehicleNumber: string, type: VehicleType = 'light', zoneId?: string, slot?: string) => {
     let targetZoneIndex = -1;
