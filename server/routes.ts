@@ -40,7 +40,7 @@ export async function registerRoutes(
   });
 
   // Initialize parking zones (seed)
-  app.post("/api/zones/initialize", async (req, res) => {
+  app.post("/api/parking-zones/initialize", async (req, res) => {
     try {
       const existingZones = await storage.getAllZones();
       if (existingZones.length > 0) {
@@ -72,7 +72,7 @@ export async function registerRoutes(
   });
 
   // Get all zones with vehicle stats
-  app.get("/api/zones", async (req, res) => {
+  app.get("/api/parking-zones", async (req, res) => {
     try {
       const zones = await storage.getAllZones();
       const allVehicles = await storage.getAllVehicles();
@@ -113,7 +113,7 @@ export async function registerRoutes(
   });
 
   // Create new zone
-  app.post("/api/zones", async (req, res) => {
+  app.post("/api/parking-zones", async (req, res) => {
     try {
       console.log("Creating zone with data:", req.body);
       const validatedData = insertParkingZoneSchema.parse(req.body);
@@ -126,7 +126,7 @@ export async function registerRoutes(
   });
 
   // Update zone
-  app.patch("/api/zones/:id", async (req, res) => {
+  app.patch("/api/parking-zones/:id", async (req, res) => {
     try {
       const { id } = req.params;
       const updates = req.body;
@@ -143,7 +143,7 @@ export async function registerRoutes(
   });
 
   // Delete zone
-  app.delete("/api/zones/:id", async (req, res) => {
+  app.delete("/api/parking-zones/:id", async (req, res) => {
     try {
       const { id } = req.params;
       await storage.deleteZone(id);
