@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import path from "path";
 
 export default defineConfig(async () => {
   const isRender =
@@ -26,16 +27,25 @@ export default defineConfig(async () => {
   }
 
   return {
-    root: "client",          // ⭐ THIS IS THE FIX
+    root: "client",
+
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "client/src")
+      }
+    },
+
     plugins: [
       react(),
       tailwindcss(),
       ...replitPlugins
     ],
+
     build: {
       outDir: "../dist/client",
       emptyOutDir: true
     },
+
     server: {
       port: 5000
     }
