@@ -1,10 +1,10 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
+import path from "path";
 
-// server deps to bundle (reduce cold start)
+// Packages we want bundled
 const allowlist = [
-  "@google/generative-ai",
   "axios",
   "connect-pg-simple",
   "cors",
@@ -12,47 +12,29 @@ const allowlist = [
   "drizzle-orm",
   "drizzle-zod",
   "express",
-  "express-rate-limit",
   "express-session",
-  "jsonwebtoken",
   "memorystore",
-  "multer",
-  "nanoid",
-  "nodemailer",
-  "openai",
   "passport",
   "passport-local",
   "pg",
-  "stripe",
-  "uuid",
   "ws",
-  "xlsx",
   "zod",
-  "zod-validation-error"
+  "zod-validation-error",
 ];
 
 async function buildAll() {
-  // clean dist
   await rm("dist", { recursive: true, force: true });
 
-  /* ---------------- CLIENT BUILD ---------------- */
   console.log("building client...");
-
-  await viteBuild({
-    configFile: "vite.config.ts",
-    mode: "production"
-  });
-
+  await viteBuild();
   console.log("client build done");
 
-  /* ---------------- SERVER BUILD ---------------- */
   console.log("building server...");
 
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));
-
   const allDeps = [
     ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.devDependencies || {})
+    ...Object.keys(pkg.devDependencies || {}),
   ];
 
   const externals = allDeps.filter(
@@ -65,15 +47,21 @@ async function buildAll() {
     bundle: true,
     format: "cjs",
     outfile: "dist/index.cjs",
-    minify: true,
-    external: externals,
-    define: {
-      "process.env.NODE_ENV": '"production"'
-    },
-    logLevel: "info"
-  });
 
-  console.log("server build done");
+    define: {
+      "process.env.NODE_ENV": '"production"',
+    },
+
+    // 👇 THIS FIXES @shared/schema
+    alias: {
+      "@shared": path.resolve("shared"),
+    },
+
+    external: externals,
+    minify: true,
+    sourcemap: false,
+    logLevel: "info",
+  });
 }
 
 buildAll().catch((err) => {

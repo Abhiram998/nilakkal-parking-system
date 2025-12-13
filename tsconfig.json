@@ -16,12 +16,14 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["client/src/*"]
+      "@/*": ["client/src/*"],
+      "@shared/*": ["shared/*"]
     }
   },
   "include": [
     "client/src",
     "server",
+    "shared",
     "script",
     "vite.config.ts"
   ]
