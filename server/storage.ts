@@ -53,6 +53,9 @@ export interface IStorage {
   // Analytics methods
   getDailySnapshots(days: number): Promise<DailySnapshot[]>;
   upsertDailySnapshot(snapshot: InsertDailySnapshot): Promise<DailySnapshot>;
+  
+  // Forecast methods - get daily peak occupancy per zone for last N days
+  getZoneDailyPeakOccupancy(zoneId: string, days: number): Promise<Array<{ date: string; peakCount: number; dayOfWeek: number }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -184,6 +187,75 @@ export class DatabaseStorage implements IStorage {
     
     const [newSnapshot] = await db.insert(dailySnapshots).values(snapshot).returning();
     return newSnapshot;
+  }
+
+  // Forecast method: Calculate daily peak occupancy per zone from parking events
+  // Returns data for completed days only (excludes today) sorted by date descending
+  async getZoneDailyPeakOccupancy(zoneId: string, days: number): Promise<Array<{ date: string; peakCount: number; dayOfWeek: number; daysAgo: number }>> {
+    // Get today's date string to exclude incomplete day
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    // Request one extra day to account for filtering out today
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - (days + 1));
+    
+    // Get all events for this zone in the date range
+    const events = await db.select().from(parkingEvents)
+      .where(and(
+        eq(parkingEvents.zoneId, zoneId),
+        gte(parkingEvents.eventTime, cutoffDate)
+      ))
+      .orderBy(parkingEvents.eventTime);
+    
+    // Group events by date and calculate peak occupancy for each day
+    const dailyData = new Map<string, { peakCount: number; dayOfWeek: number }>();
+    
+    events.forEach(event => {
+      const eventDate = new Date(event.eventTime);
+      const dateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+      
+      if (!dailyData.has(dateStr)) {
+        dailyData.set(dateStr, { peakCount: 0, dayOfWeek: eventDate.getDay() });
+      }
+    });
+    
+    // For each date, simulate the day's occupancy to find peak
+    Array.from(dailyData.entries()).forEach(([dateStr, data]) => {
+      const dayEvents = events.filter(e => {
+        const d = new Date(e.eventTime);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` === dateStr;
+      }).sort((a, b) => new Date(a.eventTime).getTime() - new Date(b.eventTime).getTime());
+      
+      let balance = 0;
+      let peak = 0;
+      
+      dayEvents.forEach(event => {
+        if (event.eventType === 'entry') {
+          balance++;
+        } else {
+          balance = Math.max(0, balance - 1);
+        }
+        peak = Math.max(peak, balance);
+      });
+      
+      data.peakCount = peak;
+    });
+    
+    // Convert to array, filter out today, calculate daysAgo, and sort by date (most recent first)
+    const todayMs = new Date(todayStr).getTime();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    
+    return Array.from(dailyData.entries())
+      .filter(([date]) => date !== todayStr) // Exclude today (incomplete data)
+      .map(([date, data]) => {
+        // Calculate how many days ago this date is (1 = yesterday, 2 = two days ago, etc.)
+        const dateMs = new Date(date).getTime();
+        const daysAgo = Math.round((todayMs - dateMs) / oneDayMs);
+        return { date, ...data, daysAgo };
+      })
+      .sort((a, b) => a.daysAgo - b.daysAgo) // Sort by daysAgo ascending (yesterday first)
+      .slice(0, days); // Limit to requested number of days
   }
 }
 

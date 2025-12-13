@@ -534,5 +534,239 @@ export async function registerRoutes(
     }
   });
 
+  // ============================================================================
+  // FORECAST ENDPOINT
+  // Deterministic, weighted-average based occupancy forecast for tomorrow
+  // Uses historical data from the last 7 days with recency-weighted averaging
+  // ============================================================================
+  app.get("/api/forecast", async (req, res) => {
+    try {
+      // Step 1: Get all zones and current vehicle counts
+      const zones = await storage.getAllZones();
+      const allVehicles = await storage.getAllVehicles();
+      
+      // Constants for forecast calculation
+      const HISTORY_DAYS = 7; // Minimum 7 days of historical data
+      
+      // Weighted average weights (must sum to 1.0)
+      // Yesterday: 40%, 2 days ago: 25%, 3 days ago: 15%, Remaining 4 days: 20% (5% each)
+      const WEIGHTS = {
+        day1: 0.40,  // Yesterday
+        day2: 0.25,  // 2 days ago
+        day3: 0.15,  // 3 days ago
+        remaining: 0.20 // Remaining 4 days combined (0.05 each)
+      };
+      
+      // Day-based adjustment factors
+      // Weekend (Sat/Sun) and peak pilgrimage days get higher adjustment
+      const WEEKEND_ADJUSTMENT = 1.15; // 15% increase for weekends
+      const PEAK_DAY_ADJUSTMENT = 1.20; // 20% increase for peak days (Fri evening rush)
+      
+      // Determine tomorrow's date and day of week
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDayOfWeek = tomorrow.getDay(); // 0=Sun, 6=Sat
+      const tomorrowDateStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      
+      // Determine if tomorrow is a peak day
+      // Peak days: Saturday (6), Sunday (0), Friday (5)
+      const isPeakDay = tomorrowDayOfWeek === 0 || tomorrowDayOfWeek === 5 || tomorrowDayOfWeek === 6;
+      const isWeekend = tomorrowDayOfWeek === 0 || tomorrowDayOfWeek === 6;
+      
+      // Step 2: Calculate forecast for each zone
+      const zoneForecastPromises = zones.map(async (zone) => {
+        // Get daily peak occupancy for this zone over the last 7 days
+        const dailyPeaks = await storage.getZoneDailyPeakOccupancy(zone.id, HISTORY_DAYS);
+        
+        // Get current occupancy for this zone
+        const currentVehicles = allVehicles.filter(v => v.zoneId === zone.id).length;
+        const currentOccupancyPercent = zone.capacity > 0 
+          ? Math.round((currentVehicles / zone.capacity) * 100) 
+          : 0;
+        
+        // If no historical data, use current occupancy as baseline
+        if (dailyPeaks.length === 0) {
+          const basePercent = Math.max(currentOccupancyPercent, 10); // Minimum 10%
+          const adjustedPercent = isPeakDay 
+            ? Math.min(Math.round(basePercent * (isWeekend ? WEEKEND_ADJUSTMENT : PEAK_DAY_ADJUSTMENT)), 100)
+            : basePercent;
+          
+          return {
+            zoneId: zone.id,
+            zoneName: zone.name,
+            capacity: zone.capacity,
+            currentOccupancy: currentVehicles,
+            currentOccupancyPercent,
+            forecastedOccupancyPercent: adjustedPercent,
+            forecastedVehicles: Math.round((adjustedPercent / 100) * zone.capacity),
+            dataPoints: 0,
+            confidence: 'low' as const,
+            method: 'baseline_estimate'
+          };
+        }
+        
+        // Step 3: Calculate weighted average from historical data
+        // Data is sorted by daysAgo (1=yesterday, 2=two days ago, etc.)
+        let weightedSum = 0;
+        let totalWeight = 0;
+        
+        // Count remaining days (days 4-7) for weight distribution
+        const remainingDaysCount = dailyPeaks.filter(d => d.daysAgo >= 4 && d.daysAgo <= 7).length;
+        
+        dailyPeaks.forEach((day) => {
+          // Calculate occupancy percentage for this day
+          const dayOccupancyPercent = zone.capacity > 0 
+            ? Math.round((day.peakCount / zone.capacity) * 100) 
+            : 0;
+          
+          // Assign weight based on daysAgo (explicit day offset, not index)
+          let weight: number;
+          if (day.daysAgo === 1) {
+            // Yesterday: 40% weight
+            weight = WEIGHTS.day1;
+          } else if (day.daysAgo === 2) {
+            // 2 days ago: 25% weight
+            weight = WEIGHTS.day2;
+          } else if (day.daysAgo === 3) {
+            // 3 days ago: 15% weight
+            weight = WEIGHTS.day3;
+          } else if (day.daysAgo >= 4 && day.daysAgo <= 7) {
+            // Days 4-7: split the remaining 20% evenly among available days
+            weight = remainingDaysCount > 0 ? WEIGHTS.remaining / remainingDaysCount : 0;
+          } else {
+            // Days beyond 7: no weight (shouldn't happen with 7-day limit)
+            weight = 0;
+          }
+          
+          weightedSum += dayOccupancyPercent * weight;
+          totalWeight += weight;
+        });
+        
+        // Normalize the weighted average if we don't have full 7 days
+        let baseForecatPercent = totalWeight > 0 
+          ? Math.round(weightedSum / totalWeight) 
+          : currentOccupancyPercent;
+        
+        // Step 4: Apply day-based adjustment
+        let adjustedPercent: number;
+        if (isWeekend) {
+          // Saturday or Sunday: increase by 15%
+          adjustedPercent = Math.round(baseForecatPercent * WEEKEND_ADJUSTMENT);
+        } else if (tomorrowDayOfWeek === 5) {
+          // Friday: increase by 20% (pre-weekend rush)
+          adjustedPercent = Math.round(baseForecatPercent * PEAK_DAY_ADJUSTMENT);
+        } else {
+          // Regular weekday: no adjustment
+          adjustedPercent = baseForecatPercent;
+        }
+        
+        // Step 5: Cap at 100% (cannot exceed zone capacity)
+        adjustedPercent = Math.min(adjustedPercent, 100);
+        
+        // Calculate expected vehicles from percentage
+        const forecastedVehicles = Math.round((adjustedPercent / 100) * zone.capacity);
+        
+        // Determine confidence level based on data availability
+        let confidence: 'high' | 'medium' | 'low';
+        if (dailyPeaks.length >= 7) {
+          confidence = 'high';
+        } else if (dailyPeaks.length >= 3) {
+          confidence = 'medium';
+        } else {
+          confidence = 'low';
+        }
+        
+        return {
+          zoneId: zone.id,
+          zoneName: zone.name,
+          capacity: zone.capacity,
+          currentOccupancy: currentVehicles,
+          currentOccupancyPercent,
+          forecastedOccupancyPercent: adjustedPercent,
+          forecastedVehicles,
+          dataPoints: dailyPeaks.length,
+          confidence,
+          method: 'weighted_average'
+        };
+      });
+      
+      const zoneForecast = await Promise.all(zoneForecastPromises);
+      
+      // Step 6: Calculate overall totals
+      const totalCapacity = zones.reduce((sum, z) => sum + z.capacity, 0);
+      const totalCurrentOccupancy = allVehicles.length;
+      const totalForecastedVehicles = zoneForecast.reduce((sum, z) => sum + z.forecastedVehicles, 0);
+      const overallForecastPercent = totalCapacity > 0 
+        ? Math.min(Math.round((totalForecastedVehicles / totalCapacity) * 100), 100)
+        : 0;
+      
+      // Average data points for confidence calculation
+      const avgDataPoints = zoneForecast.length > 0
+        ? zoneForecast.reduce((sum, z) => sum + z.dataPoints, 0) / zoneForecast.length
+        : 0;
+      
+      let overallConfidence: 'high' | 'medium' | 'low';
+      if (avgDataPoints >= 7) {
+        overallConfidence = 'high';
+      } else if (avgDataPoints >= 3) {
+        overallConfidence = 'medium';
+      } else {
+        overallConfidence = 'low';
+      }
+      
+      // Step 7: Build and return response
+      res.json({
+        success: true,
+        forecast: {
+          // Forecast metadata
+          generatedAt: new Date().toISOString(),
+          forecastDate: tomorrowDateStr,
+          forecastDayOfWeek: dayNames[tomorrowDayOfWeek],
+          isPeakDay,
+          isWeekend,
+          
+          // Overall forecast
+          overall: {
+            totalCapacity,
+            currentOccupancy: totalCurrentOccupancy,
+            currentOccupancyPercent: totalCapacity > 0 
+              ? Math.round((totalCurrentOccupancy / totalCapacity) * 100) 
+              : 0,
+            forecastedOccupancyPercent: overallForecastPercent,
+            forecastedVehicles: totalForecastedVehicles,
+            confidence: overallConfidence
+          },
+          
+          // Zone-wise forecast
+          zones: zoneForecast,
+          
+          // Methodology explanation
+          methodology: {
+            description: 'Weighted average of last 7 days peak occupancy with day-based adjustments',
+            weights: {
+              yesterday: '40%',
+              twoDaysAgo: '25%',
+              threeDaysAgo: '15%',
+              remainingDays: '20% (split equally)'
+            },
+            adjustments: {
+              weekend: '+15% for Saturday/Sunday',
+              friday: '+20% for Friday (pre-weekend rush)',
+              weekday: 'No adjustment'
+            },
+            constraints: {
+              maxPercent: '100% (capped at zone capacity)',
+              minDataDays: '7 days recommended for high confidence'
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Forecast error:', error);
+      res.status(500).json({ success: false, message: "Failed to generate forecast" });
+    }
+  });
+
   return httpServer;
 }
