@@ -22,17 +22,20 @@ export default defineConfig(async () => {
         runtimeError.default(),
         devBanner.default()
       );
-    } catch {
-      // Replit plugins not available — ignore safely
-    }
+    } catch {}
   }
 
   return {
+    root: "client",          // ⭐ THIS IS THE FIX
     plugins: [
       react(),
       tailwindcss(),
       ...replitPlugins
     ],
+    build: {
+      outDir: "../dist/client",
+      emptyOutDir: true
+    },
     server: {
       port: 5000
     }
