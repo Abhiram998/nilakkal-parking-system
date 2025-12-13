@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-// Detect production / Render environment
+// Detect production / Render
 const isProduction =
   process.env.NODE_ENV === "production" ||
   process.env.RENDER === "true";
@@ -13,7 +13,7 @@ export default defineConfig(async () => {
     tailwindcss()
   ];
 
-  // Load Replit-only plugins safely
+  // Replit-only plugins (safe)
   if (!isProduction) {
     try {
       const runtimeError = await import(
@@ -28,7 +28,7 @@ export default defineConfig(async () => {
         devBanner.default()
       );
     } catch {
-      // Ignore if plugins are not installed
+      // ignore
     }
   }
 
@@ -39,7 +39,7 @@ export default defineConfig(async () => {
 
     resolve: {
       alias: {
-        "@": "/client/src"
+        "@": "/src"
       }
     },
 
