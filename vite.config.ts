@@ -1,16 +1,20 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import path from "path";
+
+// Detect production / Render environment
+const isProduction =
+  process.env.NODE_ENV === "production" ||
+  process.env.RENDER === "true";
 
 export default defineConfig(async () => {
-  const isRender =
-    process.env.RENDER === "true" ||
-    process.env.NODE_ENV === "production";
+  const plugins = [
+    react(),
+    tailwindcss()
+  ];
 
-  const replitPlugins: any[] = [];
-
-  if (!isRender) {
+  // Load Replit-only plugins safely
+  if (!isProduction) {
     try {
       const runtimeError = await import(
         "@replit/vite-plugin-runtime-error-modal"
@@ -19,35 +23,33 @@ export default defineConfig(async () => {
         "@replit/vite-plugin-dev-banner"
       );
 
-      replitPlugins.push(
+      plugins.push(
         runtimeError.default(),
         devBanner.default()
       );
-    } catch {}
+    } catch {
+      // Ignore if plugins are not installed
+    }
   }
 
   return {
     root: "client",
 
+    plugins,
+
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "client/src")
+        "@": "/client/src"
       }
-    },
-
-    plugins: [
-      react(),
-      tailwindcss(),
-      ...replitPlugins
-    ],
-
-    build: {
-      outDir: "../dist/client",
-      emptyOutDir: true
     },
 
     server: {
       port: 5000
+    },
+
+    build: {
+      outDir: "../dist/client",
+      emptyOutDir: true
     }
   };
 });
