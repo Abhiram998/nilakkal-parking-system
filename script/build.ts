@@ -3,7 +3,6 @@ import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
 import path from "path";
 
-// Packages we want bundled
 const allowlist = [
   "axios",
   "connect-pg-simple",
@@ -23,12 +22,25 @@ const allowlist = [
 ];
 
 async function buildAll() {
+  // Clean dist
   await rm("dist", { recursive: true, force: true });
 
+  /* ===============================
+     ✅ BUILD CLIENT (IMPORTANT FIX)
+     =============================== */
   console.log("building client...");
-  await viteBuild();
+  await viteBuild({
+    root: "client",
+    build: {
+      outDir: "../dist/client",
+      emptyOutDir: true,
+    },
+  });
   console.log("client build done");
 
+  /* ===============================
+     BUILD SERVER
+     =============================== */
   console.log("building server...");
 
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));
@@ -52,7 +64,6 @@ async function buildAll() {
       "process.env.NODE_ENV": '"production"',
     },
 
-    // 👇 THIS FIXES @shared/schema
     alias: {
       "@shared": path.resolve("shared"),
     },
