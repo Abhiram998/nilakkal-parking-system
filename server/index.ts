@@ -2,8 +2,9 @@ import "dotenv/config";
 
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { serveStatic } from "./static";
 import { createServer } from "http";
+import path from "path";
+import fs from "fs";
 
 const app = express();
 const httpServer = createServer(app);
@@ -14,6 +15,9 @@ declare module "http" {
   }
 }
 
+// --------------------
+// Middleware
+// --------------------
 app.use(
   express.json({
     verify: (req, _res, buf) => {
@@ -35,6 +39,7 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+// Request logger (API only)
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -61,8 +66,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // --------------------
+  // API routes
+  // --------------------
   await registerRoutes(httpServer, app);
 
+  // --------------------
+  // Error handler
+  // --------------------
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || 500;
     const message = err.message || "Internal Server Error";
@@ -70,16 +81,35 @@ app.use((req, res, next) => {
     console.error(err);
   });
 
+  // --------------------
+  // PRODUCTION: Serve React (Vite build)
+  // --------------------
   if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
+    const clientDistPath = path.resolve("dist/client");
+
+    // Serve static assets
+    app.use(express.static(clientDistPath));
+
+    // SPA fallback → VERY IMPORTANT
+    app.get("*", (_req, res) => {
+      const indexHtml = path.join(clientDistPath, "index.html");
+      if (fs.existsSync(indexHtml)) {
+        res.sendFile(indexHtml);
+      } else {
+        res.status(500).send("Client build not found");
+      }
+    });
+  } 
+  // --------------------
+  // DEV: Vite dev server
+  // --------------------
+  else {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }
 
   const port = Number(process.env.PORT) || 5000;
 
-  // 🔴 THIS FIXES RENDER CRASH
   httpServer.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
